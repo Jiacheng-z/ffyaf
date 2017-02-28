@@ -23,11 +23,11 @@ class Sys_Exception_Handler
     public static function initHandler()
     {
         if (YAF_ENABLE_EXCEPTION_HANDLER) {
-            set_exception_handler(array('Sys_Exception_Handler', 'handleException'));
+            set_exception_handler(["Sys_Exception_Handler", "handleException"]);
         }
         if (YAF_ENABLE_ERROR_HANDLER) {
-            set_error_handler(array('Sys_Exception_Handler', 'handleError'), error_reporting());
-            register_shutdown_function(array('Sys_Exception_Handler', 'handleFatalError'));
+            set_error_handler(["Sys_Exception_Handler", "handleError"], error_reporting());
+            register_shutdown_function(["Sys_Exception_Handler", "handleFatalError"]);
         }
     }
 
@@ -40,6 +40,7 @@ class Sys_Exception_Handler
         switch (get_class($e)) {
 
             case "Sys_Exception": // 项目异常类
+
                 restore_error_handler();
                 restore_exception_handler();
 
@@ -47,21 +48,24 @@ class Sys_Exception_Handler
                 $strErrmsg = $e->getMessage();
                 $strErrContent = $e->getContent();
 
-                $arrRes = array(
+                $arrRes = [
                     'code' => $intErrno,
                     'desc' => $strErrmsg,
-                );
+                ];
                 if ($strErrContent !== null) {
                     $arrRes['content'] = $strErrContent;
                 }
-                $ret = self::_output($arrRes);
+
+                self::_output($arrRes);
+
                 break;
             default:
+
                 self::displayException($e);
                 if (is_a($e, 'Yaf_Exception')) {
-                    $ret = self::_output(array('code' => 404));
+                    self::_output(['code' => 404]);
                 } else {
-                    $ret = self::_output(array('code' => 503));
+                    self::_output(['code' => 503]);
                 }
                 $message = $e->__toString();
                 if (isset($_SERVER['REQUEST_URI'])) {
@@ -75,14 +79,54 @@ class Sys_Exception_Handler
                 //code 516 找不到对应的Controller
                 //code 517 找不到对应的action
                 if (!in_array($e->getCode(), [516, 517])) {
-                    $config = Yaf_Registry::get('config');
-                    $logger = new Log($config->runtimePath, 'exception.log');
+                    $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'exception.log');
                     $logger->setLog($message);
                 }
 
                 break;
         }
         return;
+    }
+
+    public static function handleError($code, $message, $file, $line)
+    {
+        if ($code & error_reporting()) {
+            // disable error capturing to avoid recursive errors
+//            restore_error_handler();
+//            restore_exception_handler();
+
+            $log = "$message ($file:$line)\nStack trace:\n";
+            $trace = debug_backtrace();
+            // skip the first 3 stacks as they do not tell the error position
+            if (count($trace) > 3) {
+                $trace = array_slice($trace, 3);
+            }
+            foreach ($trace as $i => $t) {
+                if (!isset($t['file'])) {
+                    $t['file'] = 'unknown';
+                }
+                if (!isset($t['line'])) {
+                    $t['line'] = 0;
+                }
+                if (!isset($t['function'])) {
+                    $t['function'] = 'unknown';
+                }
+                $log .= "#$i {$t['file']}({$t['line']}): ";
+                if (isset($t['object']) && is_object($t['object'])) {
+                    $log .= get_class($t['object']) . '->';
+                }
+                $log .= "{$t['function']}()\n";
+            }
+            if (isset($_SERVER['REQUEST_URI'])) {
+                $log .= 'REQUEST_URI=' . $_SERVER['REQUEST_URI'];
+            }
+            if (isset($_SERVER['HTTP_REFERER'])) {
+                $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
+            }
+            $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'error.log');
+            $logger->setLog($log);
+            self::displayError($code, $message, $file, $line);
+        }
     }
 
     public static function handleFatalError()
@@ -130,62 +174,29 @@ class Sys_Exception_Handler
         if (isset($_SERVER['HTTP_REFERER'])) {
             $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
         }
-        $config = Yaf_Application::app()->getConfig();
-        $logger = new Log($config->runtimePath, 'error.log');
+        $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'error.log');
         $logger->setLog($message);
-//        self::displayFatalError($code, $message, $file, $line);
+        self::displayFatalError($code, $message, $file, $line);
     }
 
-    public static function handleError($code, $message, $file, $line)
-    {
-        if ($code & error_reporting()) {
-            // disable error capturing to avoid recursive errors
-//            restore_error_handler();
-//            restore_exception_handler();
 
-            $log = "$message ($file:$line)\nStack trace:\n";
-            $trace = debug_backtrace();
-            // skip the first 3 stacks as they do not tell the error position
-            if (count($trace) > 3) {
-                $trace = array_slice($trace, 3);
-            }
-            foreach ($trace as $i => $t) {
-                if (!isset($t['file'])) {
-                    $t['file'] = 'unknown';
-                }
-                if (!isset($t['line'])) {
-                    $t['line'] = 0;
-                }
-                if (!isset($t['function'])) {
-                    $t['function'] = 'unknown';
-                }
-                $log .= "#$i {$t['file']}({$t['line']}): ";
-                if (isset($t['object']) && is_object($t['object'])) {
-                    $log .= get_class($t['object']) . '->';
-                }
-                $log .= "{$t['function']}()\n";
-            }
-            if (isset($_SERVER['REQUEST_URI'])) {
-                $log .= 'REQUEST_URI=' . $_SERVER['REQUEST_URI'];
-            }
-            if (isset($_SERVER['HTTP_REFERER'])) {
-                $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
-            }
-            $config = Yaf_Application::app()->getConfig();
-            $logger = new Log($config->runtimePath, 'error.log');
-            $logger->setLog($log);
-            self::displayError($code, $message, $file, $line);
+    /**
+     * Displays the uncaught PHP exception.
+     * This method displays the exception in HTML when there is
+     * no active error handler.
+     * @param Exception $exception the uncaught exception
+     */
+    public static function displayException($exception)
+    {
+        if (Tool::isDebug()) {
+            echo '<h1>' . get_class($exception) . "</h1>\n";
+            echo '<p>' . $exception->getMessage() . ' (' . $exception->getFile() . ':' . $exception->getLine() . ')</p>';
+            echo '<pre>' . $exception->getTraceAsString() . '</pre>';
         }
     }
 
-    public static function displayFatalError($code, $message, $file, $line)
-    {
-        self::displayError($code, $message, $file, $line);
-        $errors = Yaf_Registry::get('error');
-        foreach ($errors as $e) {
-            echo $e;
-        }
-    }
+
+
 
     public static function displayError($code, $message, $file, $line)
     {
@@ -224,21 +235,20 @@ class Sys_Exception_Handler
         Yaf_Registry::set('error', $error);
     }
 
-    /**
-     * Displays the uncaught PHP exception.
-     * This method displays the exception in HTML when there is
-     * no active error handler.
-     * @param Exception $exception the uncaught exception
-     */
-    public static function displayException($exception)
+    public static function displayFatalError($code, $message, $file, $line)
     {
-        if (defined('YAF_DEBUG') && YAF_DEBUG) {
-            echo '<h1>' . get_class($exception) . "</h1>\n";
-            echo '<p>' . $exception->getMessage() . ' (' . $exception->getFile() . ':' . $exception->getLine() . ')</p>';
-            echo '<pre>' . $exception->getTraceAsString() . '</pre>';
+        self::displayError($code, $message, $file, $line);
+        $errors = Yaf_Registry::get('error');
+        foreach ($errors as $e) {
+            echo $e;
         }
     }
 
+
+    /**
+     * 输出错误的入口
+     * @param $data
+     */
     private static function _output($data)
     {
         $viewType = Yaf_Registry::get("viewType");
@@ -260,21 +270,11 @@ class Sys_Exception_Handler
     private static function _output_smarty($data)
     {
         switch ($data['code']) {
-            case '2':
-            case '3':
+            case SYS_FAILED:
+            case SYS_FORBIDDEN:
                 header('HTTP/1.1 403 Forbidden');
                 break;
-            case '10':
-                $r = urlencode($_SERVER['REQUEST_URI']);
-                header('Location: /user/login?r=' . $r);
-                break;
-            case '200':
-                $smarty = Yaf_Registry::get('view');
-                $smarty->display('help/redirect.tpl');
-                break;
-            case '301':
-                //sitemap
-
+            case SYS_REDIRECT_PERMANENTLY:
                 header('HTTP/1.1 301 Moved Permanently');
                 if (isset($data['content'])) {
                     header('Location: ' . $data['content']);
@@ -282,49 +282,37 @@ class Sys_Exception_Handler
                     header('Location: /');
                 }
                 break;
-            case '302':
+            case SYS_REDIRECT:
                 if (isset($data['content'])) {
                     header('Location: ' . $data['content']);
                 } else {
                     header('Location: /');
                 }
                 break;
-            case '404':
-                //sitemap
-                $action = Yaf_Application::app()->getDispatcher()->getRequest()->action;
-                //如果方法是团但是站点不存在那么跳转首页
-                if ($action == "tuan") {
-                    header('Location: /');
-                } else {
-
-                    header('HTTP/1.1 404 Not Found');
-                    header("status: 404 Not Found");
-                    $smarty = Yaf_Registry::get('view');
-                    $smarty->assign('meta_md5', null);
-                    $smarty->display('help/err404.tpl');
-                }
-                break;
-            case '503':
+            case SYS_SERVER_ERROR:
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
                 header('Status: 503 Service Temporarily Unavailable');
-                $smarty = Yaf_Registry::get('view');
-                $smarty->assign('meta_md5', null);
-                $smarty->display('help/err503.tpl');
+                $tpl = Tool::getConfig()->exception_tpl->err_500;
+                if (isset($tpl) and file_exists($tpl)) {
+                    $smarty = Yaf_Registry::get('view');
+                    $smarty->display($tpl);
+                }
                 break;
+            case SYS_NOT_FOUND:
             default:
-                //sitemap
-
                 header('HTTP/1.1 404 Not Found');
                 header("status: 404 Not Found");
-                Yaf_Registry::get('view')->display('help/err404.tpl');
+                $tpl = Tool::getConfig()->exception_tpl->err_404;
+                if (isset($tpl) and file_exists($tpl)) {
+                    $smarty = Yaf_Registry::get('view');
+                    $smarty->display($tpl);
+                }
                 break;
         }
     }
 
     private static function _output_callback($data)
     {
-        $request = Yaf_Dispatcher::getInstance()->getRequest();
-        $method = $request->getMethod();
         $view = Yaf_Registry::get('view');
         $callback = Yaf_Registry::get('callback');
         $view->assign('callback', $callback);
@@ -334,27 +322,13 @@ class Sys_Exception_Handler
         }
         if (isset($data['content'])) {
             $view->assign('content', $data['content']);
-        }
-
-        if (isset($data['card'])) {
-            $view->assign('card', $data['card']);
-        }
-        if (isset($data['stat_url'])) {
-            $view->assign('stat_url', $data['stat_url']);
-        }
-        if (isset($data['show_url'])) {
-            $view->assign('show_url', $data['show_url']);
         }
         $view->display(null);
     }
 
     private static function _output_json($data)
     {
-        $request = Yaf_Dispatcher::getInstance()->getRequest();
-        $method = $request->getMethod();
         $view = Yaf_Registry::get('view');
-        $callback = Yaf_Registry::get('callback');
-        $view->assign('callback', $callback);
         $view->assign('code', $data['code']);
         if (isset($data['desc'])) {
             $view->assign('desc', $data['desc']);
@@ -362,7 +336,7 @@ class Sys_Exception_Handler
         if (isset($data['content'])) {
             $view->assign('content', $data['content']);
         }
-        $view->display('help/err.php');
+        $view->display(null);
     }
 
 }

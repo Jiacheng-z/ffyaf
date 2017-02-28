@@ -16,13 +16,8 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
     }
 
     /**
-     * 初始化配置
+     * 引入一些无法自动加载的类文件
      */
-    public function _initConfig()
-    {
-        Yaf_Registry::set("config", Yaf_Application::app()->getConfig());
-    }
-
     public function _initLoader()
     {
         Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Abstract/Controller.php"); /* 导入Controller基础类 */
@@ -48,41 +43,37 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initXhprof()
     {
-        $config = Yaf_Registry::get("config");
-        if ($config->enableXhprof == true) {
+        if (Tool::getConfig()->enableXhprof == true) {
             Ext_Xhprof::start();
         }
     }
 
     public function _initLogger()
     {
-        $config = Yaf_Application::app()->getConfig();
-        $logger = new Sys_Log($config->runtimePath, "application.log");
+        $logger = new Sys_Log(Tool::getConfig()->runtimePath, "application.log");
         Yaf_Registry::set("logger", $logger);
     }
 
     public function _initSession()
     {
-//        $config = Yaf_Registry::get("config");
-//        $redis = $config->redis->miaoche;
-//        $save_path = "tcp://" . $redis->host . ":" . $redis->port;
-//        $save_path .= "?auth=" . $redis->auth . "&prefix=SESSION:WWW:&timeout=1";
-//        ini_set("session.save_path", $save_path);
-//        ini_set("session.save_handler", 'redis');
-//
-//        ini_set("session.gc_maxlifetime", 1440);
-//        ini_set("session.gc_probability", 0);
+        $config = Tool::getConfig();
+
+        ini_set("session.name", $config->session->name);
+        ini_set("session.save_handler", $config->session->save_handler);
+        ini_set("session.save_path", $config->session->save_path);
+        ini_set("session.cookie_domain", $config->session->cookie_domain);
+        ini_set("session.gc_maxlifetime", $config->session->gc_maxlifetime);
+        ini_set("session.gc_probability", $config->session->gc_probability);
     }
 
     public function _initRouter()
     {
-        $dispatcher = Yaf_Application::app()->getDispatcher();
-
-        $router = $dispatcher->getRouter();
-        $config = new Yaf_Config_Simple(include(CONFIG_PATH . '/router.php'));
-        $router->addConfig($config);
+        if (Tool::getConfig()->urlRewrite == true) {
+            $router = Yaf_Dispatcher::getInstance()->getRouter();
+            $config = new Yaf_Config_Simple(include(CONFIG_PATH . 'router.php'));
+            $router->addConfig($config);
+        }
     }
-
 
     /**
      * 加载钩子

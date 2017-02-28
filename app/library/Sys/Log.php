@@ -31,9 +31,13 @@ class Sys_Log
     private $_filehandle; //文件句柄
 
     /**
-     *作用:初始化记录类
-     *输入:文件的路径,要写入的文件名
-     *输出:无
+     * Sys_Log constructor.
+     * @param null $dir
+     * @param null $filename
+     *
+     * 作用:初始化记录类
+     * 输入:文件的路径,要写入的文件名
+     * 输出:无
      */
     public function __construct($dir = null, $filename = null)
     {

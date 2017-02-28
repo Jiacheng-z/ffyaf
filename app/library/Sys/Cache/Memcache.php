@@ -1,6 +1,6 @@
 <?php
 
-class CMemcache extends Singleton
+class Sys_Cache_Memcache extends Singleton
 {
     private $cache;
     static private $_instance = array();
@@ -33,10 +33,10 @@ class CMemcache extends Singleton
                     Yaf_Registry::set("memcache_config", $this->_config);
                 }
                 $cache = new Memcache();
-                ini_set("memcache.allow_failover",1);
+                ini_set("memcache.allow_failover", 1);
                 ini_set("memcache.max_failover_attempts", 2);
-                ini_set('memcache.hash_function','crc32');
-                ini_set('memcache.hash_strategy','consistent');
+                ini_set('memcache.hash_function', 'crc32');
+                ini_set('memcache.hash_strategy', 'consistent');
                 foreach ($this->_config as $v) {
                     $cache->addServer($v->host, $v->port);
                 }
@@ -60,7 +60,7 @@ class CMemcache extends Singleton
         if (method_exists($this->cache, $strMethod)) {
             return call_user_func_array(array($this->cache, $strMethod), $arrParam);
         }
-        throw new Exception(get_class($this)."::{$strMethod} not defined");
+        throw new Exception(get_class($this) . "::{$strMethod} not defined");
     }
 }
 

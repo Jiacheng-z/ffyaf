@@ -74,8 +74,18 @@ return [
         "save_path" => "",
 //        "save_path" => "tcp://localhost:6379?auth=RnYMeKNtOWfVfKM4oQBkf4iaWopQg5&prefix=SESSION:WWW:&timeout=1",
         "cookie_domain" => ".test.com", /* cookie主域 */
+
+        "gc_maxlifetime" => 1440,
+        "gc_probability" => 1,
     ],
 
     /* 日志路径 */
     "runtimePath" => APPLICATION_PATH . "../tmp/_runtime/",
+
+    /* 异常模板路径 */
+    "exception_tpl" => [
+        "err" => APPLICATION_PATH . "help/err.html",
+        "err_404" => APPLICATION_PATH . "help/err404.html",
+        "err_500" => APPLICATION_PATH . "help/err500.html",
+    ],
 ];

@@ -1,16 +1,18 @@
 <?php
 
-class CYac extends Singleton
+class Sys_Cache_Yac extends Singleton
 {
     private $cache;
     private $_prefix;
     static private $_instance = array();
 
-    public function __construct($obj = '') {
+    public function __construct($obj = '')
+    {
         $this->_prefix = $obj;
     }
 
-    static public function getInstance($obj = 'miaoche') {
+    static public function getInstance($obj = 'miaoche')
+    {
         if (!isset(self::$_instance[$obj])) {
             $instance = new CYac($obj);
             self::$_instance[$obj] = $instance;
@@ -20,7 +22,8 @@ class CYac extends Singleton
         return $instance;
     }
 
-    public function __call($strMethod, $arrParam) {
+    public function __call($strMethod, $arrParam)
+    {
         $mainConfig = Yaf_Application::app()->getConfig();
         if (!$mainConfig->enableCache) {
             return;
@@ -31,6 +34,6 @@ class CYac extends Singleton
         if (method_exists($this->cache, $strMethod)) {
             return call_user_func_array(array($this->cache, $strMethod), $arrParam);
         }
-        throw new Exception(get_class($this)."::{$strMethod} not defined");
+        throw new Exception(get_class($this) . "::{$strMethod} not defined");
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-class IndexTableModel extends Mc_ModelBase
+class IndexTableModel extends Sys_Abstract_Model
 {
     protected $_db;
     protected $_table = 'index_table';

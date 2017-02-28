@@ -1,6 +1,6 @@
 <?php
 
-class CRedis extends Singleton
+class Sys_Cache_Redis extends Singleton
 {
     private $cache;
     static private $_instance = array();
@@ -25,7 +25,7 @@ class CRedis extends Singleton
     private function connect($conf)
     {
         static $cache = null;
-        if($cache === null){
+        if ($cache === null) {
             $cache = new Redis();
             $cache->connect($conf->host, $conf->port);
         }
@@ -44,6 +44,6 @@ class CRedis extends Singleton
         if (method_exists($this->cache, $strMethod)) {
             return call_user_func_array(array($this->cache, $strMethod), $arrParam);
         }
-        throw new Exception(get_class($this)."::{$strMethod} not defined");
+        throw new Exception(get_class($this) . "::{$strMethod} not defined");
     }
 }

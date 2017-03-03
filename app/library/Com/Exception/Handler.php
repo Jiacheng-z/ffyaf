@@ -1,6 +1,6 @@
 <?php
 
-class Sys_Exception_Handler
+class Com_Exception_Handler
 {
     public static $error = array(
         1 => 'E_ERROR',
@@ -23,16 +23,16 @@ class Sys_Exception_Handler
     public static function initHandler()
     {
         if (YAF_ENABLE_EXCEPTION_HANDLER) {
-            set_exception_handler(["Sys_Exception_Handler", "handleException"]);
+            set_exception_handler(["Com_Exception_Handler", "handleException"]);
         }
         if (YAF_ENABLE_ERROR_HANDLER) {
-            set_error_handler(["Sys_Exception_Handler", "handleError"], error_reporting());
-            register_shutdown_function(["Sys_Exception_Handler", "handleFatalError"]);
+            set_error_handler(["Com_Exception_Handler", "handleError"], error_reporting());
+            register_shutdown_function(["Com_Exception_Handler", "handleFatalError"]);
         }
     }
 
     /**
-     * @param $e Sys_Exception
+     * @param $e Yaf_Exception
      */
     public static function handleException($e)
     {
@@ -79,7 +79,7 @@ class Sys_Exception_Handler
                 //code 516 找不到对应的Controller
                 //code 517 找不到对应的action
                 if (!in_array($e->getCode(), [516, 517])) {
-                    $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'exception.log');
+                    $logger = new Com_Log(Tool::getConfig()->runtimePath, 'exception.log');
                     $logger->setLog($message);
                 }
 
@@ -123,7 +123,7 @@ class Sys_Exception_Handler
             if (isset($_SERVER['HTTP_REFERER'])) {
                 $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
             }
-            $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'error.log');
+            $logger = new Com_Log(Tool::getConfig()->runtimePath, 'error.log');
             $logger->setLog($log);
             self::displayError($code, $message, $file, $line);
         }
@@ -174,7 +174,7 @@ class Sys_Exception_Handler
         if (isset($_SERVER['HTTP_REFERER'])) {
             $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
         }
-        $logger = new Sys_Log(Tool::getConfig()->runtimePath, 'error.log');
+        $logger = new Com_Log(Tool::getConfig()->runtimePath, 'error.log');
         $logger->setLog($message);
         self::displayFatalError($code, $message, $file, $line);
     }
@@ -194,8 +194,6 @@ class Sys_Exception_Handler
             echo '<pre>' . $exception->getTraceAsString() . '</pre>';
         }
     }
-
-
 
 
     public static function displayError($code, $message, $file, $line)

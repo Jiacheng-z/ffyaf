@@ -1,6 +1,6 @@
 <?php
 
-class WorldAction extends Sys_Abstract_Action
+class WorldAction extends Com_Abstract_Action
 {
     function execute()
     {

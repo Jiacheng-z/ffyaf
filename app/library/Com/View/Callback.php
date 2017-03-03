@@ -1,6 +1,6 @@
 <?php
 
-class Sys_View_Callback extends Sys_View_Json
+class Com_View_Callback extends Com_View_Json
 {
     public function render($name, $value = null)
     {

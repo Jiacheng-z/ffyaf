@@ -24,7 +24,7 @@
  *             );
  *             $logs->setLog($arr);
  **********************************************************/
-class Sys_Log
+class Com_Log
 {
     private $_filepath;   //文件路径
     private $_filename;   //日志文件名

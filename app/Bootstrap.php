@@ -8,23 +8,26 @@
 class Bootstrap extends Yaf_Bootstrap_Abstract
 {
     /**
-     * 定义项目内使用的常量
-     */
-    public function _initConst()
-    {
-        Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Const.php");
-    }
-
-    /**
-     * 引入一些无法自动加载的类文件
+     * 必要的引入
      */
     public function _initLoader()
     {
-        Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Abstract/Controller.php"); /* 导入Controller基础类 */
-        Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Abstract/Action.php"); /* 导入Action基础类 */
-        Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Abstract/View.php"); /* 导入View基础类 */
+        Yaf_Loader::import(APPLICATION_PATH . "library/Com/Const.php");
+        Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Controller.php"); /* 导入Controller基础类 */
+        Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Action.php"); /* 导入Action基础类 */
+        Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/View.php"); /* 导入View基础类 */
+    }
 
-        Yaf_Loader::import(APPLICATION_PATH . "library/Sys/Exception/Exception.php"); /* 导入系统异常类 */
+    /**
+     * Enter description here ...
+     *
+     * @param Yaf_Dispatcher $dispatcher dispatcher
+     *
+     * @return void
+     */
+    public function _initConfig(Yaf_Dispatcher $dispatcher)
+    {
+
     }
 
     /**
@@ -32,10 +35,10 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initError()
     {
-        defined('YAF_ENABLE_EXCEPTION_HANDLER') or define('YAF_ENABLE_EXCEPTION_HANDLER', true);
-        defined('YAF_ENABLE_ERROR_HANDLER') or define('YAF_ENABLE_ERROR_HANDLER', true);
-        defined('YAF_TRACE_LEVEL') or define('YAF_TRACE_LEVEL', 3);
-        Sys_Exception_Handler::initHandler();
+//        defined('YAF_ENABLE_EXCEPTION_HANDLER') or define('YAF_ENABLE_EXCEPTION_HANDLER', true);
+//        defined('YAF_ENABLE_ERROR_HANDLER') or define('YAF_ENABLE_ERROR_HANDLER', true);
+//        defined('YAF_TRACE_LEVEL') or define('YAF_TRACE_LEVEL', 3);
+//        Sys_Exception_Handler::initHandler();
     }
 
     /**
@@ -50,7 +53,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
 
     public function _initLogger()
     {
-        $logger = new Sys_Log(Tool::getConfig()->runtimePath, "application.log");
+        $logger = new Com_Log(Tool::getConfig()->runtimePath, "application.log");
         Yaf_Registry::set("logger", $logger);
     }
 

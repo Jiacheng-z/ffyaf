@@ -1,7 +1,7 @@
 <?php
 
 
-class Sys_Abstract_Controller extends Yaf_Controller_Abstract
+abstract class Com_Abstract_Controller extends Yaf_Controller_Abstract
 {
 
     /**
@@ -32,7 +32,7 @@ class Sys_Abstract_Controller extends Yaf_Controller_Abstract
         $this->method = $request->getMethod();
 
         /* 攻击检测 */
-        Sys_Attack::checkCSRF();
+        Com_Attack::checkCSRF();
     }
 
     public function getParam($name, $default = null)

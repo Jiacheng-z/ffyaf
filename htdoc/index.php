@@ -31,7 +31,7 @@ $main = include(CONFIG_PATH . "main.php");
 $application = new Yaf_Application($main);
 
 /* 做简单的统计 */
-$benchmark = new Sys_Benchmark();
+$benchmark = new Com_Benchmark();
 
 $response = $application
     ->bootstrap()/*bootstrap是可选的调用*/

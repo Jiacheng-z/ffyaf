@@ -4,9 +4,9 @@
  * 攻击检测类
  *
  * 检测各种攻击
- * Class Sys_Attack
+ * Class Com_Attack
  */
-class Sys_Attack
+class Com_Attack
 {
     /**
      * 检测是否存在CSRF攻击

@@ -15,7 +15,7 @@ Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_inte
 Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_write_file.php");
 Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_resource_custom.php");
 
-class Ext_Smarty extends Sys_Abstract_View
+class Ext_Smarty extends Com_Abstract_View
 {
     /**
      * Smarty object

@@ -1,6 +1,6 @@
 <?php
 
-class Sys_Benchmark
+class Com_Benchmark
 {
     protected $_time = array();
 

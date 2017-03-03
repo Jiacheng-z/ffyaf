@@ -1,6 +1,6 @@
 <?php
 
-class Sys_Abstract_View implements Yaf_View_Interface
+class Com_Abstract_View implements Yaf_View_Interface
 {
     public $path;
     public $values;

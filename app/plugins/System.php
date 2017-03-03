@@ -17,7 +17,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
         $arr = explode('_', $request->getControllerName(), 2);
         switch ($arr[0]) {
             case 'Aj':
-                $view = new Sys_View_Json();
+                $view = new Com_View_Json();
                 $view->setScriptPath(APPLICATION_PATH . "views/");
                 Yaf_Dispatcher::getInstance()->setView($view);
                 Yaf_Registry::set("view", $view);
@@ -25,7 +25,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
                 header('Content-type: application/json; charset=utf-8');
                 break;
             case 'Api':
-                $view = new Sys_View_Callback();
+                $view = new Com_View_Callback();
                 $view->setScriptPath(APPLICATION_PATH . "views/");
                 Yaf_Dispatcher::getInstance()->setView($view);
                 Yaf_Registry::set("view", $view);

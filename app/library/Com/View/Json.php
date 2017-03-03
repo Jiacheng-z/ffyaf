@@ -1,6 +1,6 @@
 <?php
 
-class Sys_View_Json extends Sys_Abstract_View
+class Com_View_Json extends Com_Abstract_View
 {
 
     /**

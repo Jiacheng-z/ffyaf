@@ -41,13 +41,11 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
     public function _initLogger()
     {
         if (Com_Tool::isDebug()) {
-            $app = new Com_Log(Com_Config::get()->runtimePath, "application.log");
-            $exc = new Com_Log(Com_Config::get()->runtimePath, "exception.log");
-            $err = new Com_Log(Com_Config::get()->runtimePath, "error.log");
 
-            Yaf_Registry::set("log_app", $app);
-            Yaf_Registry::set("log_ecx", $exc);
-            Yaf_Registry::set("log_err", $err);
+            define("LOG_RUNTIME_PATH", Com_Config::get()->runtimePath);
+            define("LOG_FILE_APP", "application.log");
+            define("LOG_FILE_EXC", "exception.log");
+            define("LOG_FILE_ERR", "error.log");
         }
     }
 

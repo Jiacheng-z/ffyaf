@@ -27,54 +27,28 @@ class Com_Exception_Handler
         register_shutdown_function(["Com_Exception_Handler", "handle_shutdown"]);
     }
 
-
+    /**
+     * 接受没有catch的异常
+     * @param $e Com_Abstract_Exception
+     */
     public static function handle_exception($e)
     {
-        switch (get_class($e)) {
-            default:
-                break;
-        }
-    }
+        $isChild = $e instanceof Com_Abstract_Exception;
 
-    public static function handle_error($errno, $errstr, $errfile, $errline)
-    {
-
-    }
-
-    public static function handle_shutdown()
-    {
-
-    }
-
-    /**
-     * @param $e Yaf_Exception
-     */
-    public static function handleException($e)
-    {
-        // disable error capturing to avoid recursive errors
-        switch (get_class($e)) {
-
-            case "Sys_Exception": // 项目异常类
-
+        switch ($isChild) {
+            case true: //项目异常(非中断)
                 restore_error_handler();
                 restore_exception_handler();
 
-                $intErrno = $e->getCode();
-                $strErrmsg = $e->getMessage();
-                $strErrContent = $e->getContent();
-
-                $arrRes = [
-                    'code' => $intErrno,
-                    'desc' => $strErrmsg,
+                $arr = [
+                    "code" => $e->getCode(),
+                    "desc" => $e->getMessage(),
                 ];
-                if ($strErrContent !== null) {
-                    $arrRes['content'] = $strErrContent;
-                }
-
-                self::_output($arrRes);
+                self::_output($arr);
 
                 break;
-            default:
+
+            default:    //yaf 或 其他异常
 
                 self::displayException($e);
                 if (is_a($e, 'Yaf_Exception')) {
@@ -82,6 +56,7 @@ class Com_Exception_Handler
                 } else {
                     self::_output(['code' => 503]);
                 }
+
                 $message = $e->__toString();
                 if (isset($_SERVER['REQUEST_URI'])) {
                     $message .= "\nREQUEST_URI=" . $_SERVER['REQUEST_URI'];
@@ -93,24 +68,31 @@ class Com_Exception_Handler
 
                 //code 516 找不到对应的Controller
                 //code 517 找不到对应的action
-                if (!in_array($e->getCode(), [516, 517])) {
-                    $logger = new Com_Log(Com_Config::get()->runtimePath, 'exception.log');
-                    $logger->setLog($message);
+                if (!in_array($e->getCode(), [516, 517]) and Com_Tool::isDebug()) {
+                    if (defined(LOG_RUNTIME_PATH) and defined(LOG_FILE_EXC)) {
+                        $exc = new Com_Log(LOG_RUNTIME_PATH, LOG_FILE_EXC);
+                        $exc->setLog($message);
+                    }
                 }
 
                 break;
         }
-        return;
     }
 
-    public static function handleError($code, $message, $file, $line)
+    /**
+     * 错误的接受
+     * @param $errno
+     * @param $errstr
+     * @param $errfile
+     * @param $errline
+     */
+    public static function handle_error($errno, $errstr, $errfile, $errline)
     {
-        if ($code & error_reporting()) {
-            // disable error capturing to avoid recursive errors
-//            restore_error_handler();
-//            restore_exception_handler();
+        if (($errno & error_reporting()) and Com_Tool::isDebug()) {
 
-            $log = "$message ($file:$line)\nStack trace:\n";
+            self::displayError($errno, $errstr, $errfile, $errline);
+
+            $log = "$errstr ($errfile:$errline)\nStack trace:\n";
             $trace = debug_backtrace();
             // skip the first 3 stacks as they do not tell the error position
             if (count($trace) > 3) {
@@ -138,13 +120,18 @@ class Com_Exception_Handler
             if (isset($_SERVER['HTTP_REFERER'])) {
                 $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
             }
-            $logger = new Com_Log(Com_Config::get()->runtimePath, 'error.log');
-            $logger->setLog($log);
-            self::displayError($code, $message, $file, $line);
+
+            if (defined(LOG_RUNTIME_PATH) and defined(LOG_FILE_ERR)) {
+                $err = new Com_Log(LOG_RUNTIME_PATH, LOG_FILE_ERR);
+                $err->setLog($log);
+            }
         }
     }
 
-    public static function handleFatalError()
+    /**
+     * 脚本结尾函数
+     */
+    public static function handle_shutdown()
     {
         $e = error_get_last();
         if (empty($e)) {
@@ -189,8 +176,11 @@ class Com_Exception_Handler
         if (isset($_SERVER['HTTP_REFERER'])) {
             $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
         }
-        $logger = new Com_Log(Com_Config::get()->runtimePath, 'error.log');
-        $logger->setLog($message);
+
+        if (defined(LOG_RUNTIME_PATH) and defined(LOG_FILE_ERR)) {
+            $err = new Com_Log(LOG_RUNTIME_PATH, LOG_FILE_ERR);
+            $err->setLog($message);
+        }
         self::displayFatalError($code, $message, $file, $line);
     }
 
@@ -213,9 +203,7 @@ class Com_Exception_Handler
 
     public static function displayError($code, $message, $file, $line)
     {
-//        if (!(defined('YAF_DEBUG') && YAF_DEBUG)) {
-//            return;
-//        }
+
         $errMsg = "<h1>PHP " . self::$error[$code] . " [" . $code . "]</h1>\n";
         $errMsg .= "<p>$message ($file:$line)</p>\n";
         $errMsg .= '<pre>';
@@ -283,8 +271,8 @@ class Com_Exception_Handler
     private static function _output_smarty($data)
     {
         switch ($data['code']) {
-            case SYS_FAILED:
-            case SYS_FORBIDDEN:
+            case SYS_ERR_FAILED:
+            case SYS_ERR_FORBIDDEN:
                 header('HTTP/1.1 403 Forbidden');
                 break;
             case SYS_REDIRECT_PERMANENTLY:
@@ -302,7 +290,7 @@ class Com_Exception_Handler
                     header('Location: /');
                 }
                 break;
-            case SYS_SERVER_ERROR:
+            case SYS_ERR_SERVER:
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
                 header('Status: 503 Service Temporarily Unavailable');
                 $tpl = Com_Config::get()->exception_tpl->err_500;

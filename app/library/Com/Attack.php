@@ -43,7 +43,7 @@ class Com_Attack
             return false;
         }
         $refer = parse_url($_SERVER['HTTP_REFERER']);
-        $host = Tool::getConfig()->host;
+        $host = Com_Config::get()->host;
 
         if ($refer['host'] != $host and $refer['host'] != $_SERVER['HTTP_HOST']) {
             return false;

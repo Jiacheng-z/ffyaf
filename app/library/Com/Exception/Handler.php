@@ -79,7 +79,7 @@ class Com_Exception_Handler
                 //code 516 找不到对应的Controller
                 //code 517 找不到对应的action
                 if (!in_array($e->getCode(), [516, 517])) {
-                    $logger = new Com_Log(Tool::getConfig()->runtimePath, 'exception.log');
+                    $logger = new Com_Log(Com_Config::get()->runtimePath, 'exception.log');
                     $logger->setLog($message);
                 }
 
@@ -123,7 +123,7 @@ class Com_Exception_Handler
             if (isset($_SERVER['HTTP_REFERER'])) {
                 $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
             }
-            $logger = new Com_Log(Tool::getConfig()->runtimePath, 'error.log');
+            $logger = new Com_Log(Com_Config::get()->runtimePath, 'error.log');
             $logger->setLog($log);
             self::displayError($code, $message, $file, $line);
         }
@@ -174,7 +174,7 @@ class Com_Exception_Handler
         if (isset($_SERVER['HTTP_REFERER'])) {
             $log .= "\nHTTP_REFERER=" . $_SERVER['HTTP_REFERER'];
         }
-        $logger = new Com_Log(Tool::getConfig()->runtimePath, 'error.log');
+        $logger = new Com_Log(Com_Config::get()->runtimePath, 'error.log');
         $logger->setLog($message);
         self::displayFatalError($code, $message, $file, $line);
     }
@@ -188,7 +188,7 @@ class Com_Exception_Handler
      */
     public static function displayException($exception)
     {
-        if (Tool::isDebug()) {
+        if (Com_Tool::isDebug()) {
             echo '<h1>' . get_class($exception) . "</h1>\n";
             echo '<p>' . $exception->getMessage() . ' (' . $exception->getFile() . ':' . $exception->getLine() . ')</p>';
             echo '<pre>' . $exception->getTraceAsString() . '</pre>';
@@ -290,7 +290,7 @@ class Com_Exception_Handler
             case SYS_SERVER_ERROR:
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
                 header('Status: 503 Service Temporarily Unavailable');
-                $tpl = Tool::getConfig()->exception_tpl->err_500;
+                $tpl = Com_Config::get()->exception_tpl->err_500;
                 if (isset($tpl) and file_exists($tpl)) {
                     $smarty = Yaf_Registry::get('view');
                     $smarty->display($tpl);
@@ -300,7 +300,7 @@ class Com_Exception_Handler
             default:
                 header('HTTP/1.1 404 Not Found');
                 header("status: 404 Not Found");
-                $tpl = Tool::getConfig()->exception_tpl->err_404;
+                $tpl = Com_Config::get()->exception_tpl->err_404;
                 if (isset($tpl) and file_exists($tpl)) {
                     $smarty = Yaf_Registry::get('view');
                     $smarty->display($tpl);

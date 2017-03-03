@@ -66,7 +66,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
     public function dispatchLoopShutdown(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response)
     {
         // 结束xhprof
-        if (Tool::isDebug() and Tool::getConfig()->enableXhprof) {
+        if (Com_Tool::isDebug() and Com_Config::get()->enableXhprof) {
             Ext_Xhprof::end();
         }
     }

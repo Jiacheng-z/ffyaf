@@ -1,22 +1,14 @@
 <?php
 
 
-class Tool
+class Com_Config
 {
-    /**
-     * 是否是debug模式
-     */
-    static public function isDebug()
-    {
-        return YAF_DEBUG;
-    }
-
     /**
      * 获取配置
      * @param string $conf
      * @return mixed
      */
-    static public function getConfig($conf = "main")
+    static public function get($conf = "main")
     {
         static $_configs = [];
 
@@ -31,4 +23,5 @@ class Tool
 
         return $_configs[$config_name];
     }
+
 }

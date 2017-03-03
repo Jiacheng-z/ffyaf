@@ -46,20 +46,20 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initXhprof()
     {
-        if (Tool::getConfig()->enableXhprof == true) {
+        if (Com_Config::get()->enableXhprof == true) {
             Ext_Xhprof::start();
         }
     }
 
     public function _initLogger()
     {
-        $logger = new Com_Log(Tool::getConfig()->runtimePath, "application.log");
+        $logger = new Com_Log(Com_Config::get()->runtimePath, "application.log");
         Yaf_Registry::set("logger", $logger);
     }
 
     public function _initSession()
     {
-        $config = Tool::getConfig();
+        $config = Com_Config::get();
 
         ini_set("session.name", $config->session->name);
         ini_set("session.save_handler", $config->session->save_handler);
@@ -71,7 +71,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
 
     public function _initRouter()
     {
-        if (Tool::getConfig()->urlRewrite == true) {
+        if (Com_Config::get()->urlRewrite == true) {
             $router = Yaf_Dispatcher::getInstance()->getRouter();
             $config = new Yaf_Config_Simple(include(CONFIG_PATH . 'router.php'));
             $router->addConfig($config);

@@ -22,13 +22,28 @@ class Com_Exception_Handler
 
     public static function initHandler()
     {
-        if (YAF_ENABLE_EXCEPTION_HANDLER) {
-            set_exception_handler(["Com_Exception_Handler", "handleException"]);
+        set_exception_handler(["Com_Exception_Handler", "handle_exception"]);
+        set_error_handler(["Com_Exception_Handler", "handle_error"], error_reporting());
+        register_shutdown_function(["Com_Exception_Handler", "handle_shutdown"]);
+    }
+
+
+    public static function handle_exception($e)
+    {
+        switch (get_class($e)) {
+            default:
+                break;
         }
-        if (YAF_ENABLE_ERROR_HANDLER) {
-            set_error_handler(["Com_Exception_Handler", "handleError"], error_reporting());
-            register_shutdown_function(["Com_Exception_Handler", "handleFatalError"]);
-        }
+    }
+
+    public static function handle_error($errno, $errstr, $errfile, $errline)
+    {
+
+    }
+
+    public static function handle_shutdown()
+    {
+
     }
 
     /**

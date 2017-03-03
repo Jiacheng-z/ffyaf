@@ -35,10 +35,20 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initError()
     {
-//        defined('YAF_ENABLE_EXCEPTION_HANDLER') or define('YAF_ENABLE_EXCEPTION_HANDLER', true);
-//        defined('YAF_ENABLE_ERROR_HANDLER') or define('YAF_ENABLE_ERROR_HANDLER', true);
-//        defined('YAF_TRACE_LEVEL') or define('YAF_TRACE_LEVEL', 3);
-//        Sys_Exception_Handler::initHandler();
+        Com_Exception_Handler::initHandler();
+    }
+
+    public function _initLogger()
+    {
+        if (Com_Tool::isDebug()) {
+            $app = new Com_Log(Com_Config::get()->runtimePath, "application.log");
+            $exc = new Com_Log(Com_Config::get()->runtimePath, "exception.log");
+            $err = new Com_Log(Com_Config::get()->runtimePath, "error.log");
+
+            Yaf_Registry::set("log_app", $app);
+            Yaf_Registry::set("log_ecx", $exc);
+            Yaf_Registry::set("log_err", $err);
+        }
     }
 
     /**
@@ -46,15 +56,9 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initXhprof()
     {
-        if (Com_Config::get()->enableXhprof == true) {
+        if (Com_Tool::isDebug() and Com_Config::get()->enableXhprof == true) {
             Ext_Xhprof::start();
         }
-    }
-
-    public function _initLogger()
-    {
-        $logger = new Com_Log(Com_Config::get()->runtimePath, "application.log");
-        Yaf_Registry::set("logger", $logger);
     }
 
     public function _initSession()

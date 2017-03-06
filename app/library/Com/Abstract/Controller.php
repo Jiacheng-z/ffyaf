@@ -26,47 +26,22 @@ abstract class Com_Abstract_Controller extends Yaf_Controller_Abstract
 
     protected function init()
     {
-        $request = $this->getRequest();
+        $request = parent::getRequest();
         $this->controller = $request->getControllerName();
         $this->action = $request->getActionName();
         $this->method = $request->getMethod();
+
 
         /* 攻击检测 */
         Com_Attack::checkCSRF();
     }
 
-    public function getParam($name, $default = null)
+    /**
+     * 屏蔽父类getRequest方法
+     * 用户请使用Com_Context来取Request
+     */
+    public function getRequest()
     {
-        $request = Yaf_Dispatcher::getInstance()->getRequest();
-        $value = $request->getParam($name);
-        if (isset($value) AND $value !== '') {
-            return trim($value);
-        }
-        $value = $request->getQuery($name);
-        if (isset($value) AND $value !== '') {
-            return trim($value);
-        }
-        $value = $request->getPost($name);
-        if (isset($value) AND $value !== '') {
-            return trim($value);
-        }
-
-        return $default;
-    }
-
-    public function getParams()
-    {
-        $request = Yaf_Dispatcher::getInstance()->getRequest();
-        $params = $request->getParams() + $request->getQuery() + $request->getPost();
-        ksort($params);
-        foreach ($params as $k => $v) {
-            if ($v === '') {
-                unset($params[$k]);
-                continue;
-            }
-            $params[$k] = trim($v);
-        }
-        return $params;
     }
 
 }

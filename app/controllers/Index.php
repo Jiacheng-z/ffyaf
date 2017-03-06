@@ -13,13 +13,11 @@ class IndexController extends Com_Abstract_Controller
 
     public function indexAction()
     {
+        $a = Com_Context::getParam("param", "default");
 
-        try {
-            throw new Exception_Cache(CUST_ERR_PASSWORD);
-        } catch (Com_Abstract_Exception $e) {
-            var_dump($e->getCode());
-            var_dump($e->getMessage());
-        }
+        $c = new Cache_Test("Test");
+        var_dump($c->test());
+
         $str = "Index Action";
         $this->_view->assign("str", $str);
     }
@@ -29,5 +27,6 @@ class IndexController extends Com_Abstract_Controller
         $str = "Hello Action";
         $this->_view->assign("str", $str);
     }
+
 
 }

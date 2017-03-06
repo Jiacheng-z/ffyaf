@@ -13,6 +13,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
     public function _initLoader()
     {
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Const.php");
+        Yaf_Loader::import(APPLICATION_PATH . "library/Const.php");
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Controller.php"); /* 导入Controller基础类 */
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Action.php"); /* 导入Action基础类 */
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/View.php"); /* 导入View基础类 */
@@ -27,7 +28,8 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initConfig(Yaf_Dispatcher $dispatcher)
     {
-
+        Com_Cache_Pool::init();
+        Com_Context::init();
     }
 
     /**

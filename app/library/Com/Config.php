@@ -1,6 +1,9 @@
 <?php
 
-
+/**
+ * 取conf目录下的配置文件
+ * Class Com_Config
+ */
 class Com_Config
 {
     /**

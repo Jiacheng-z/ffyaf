@@ -17,13 +17,13 @@ class Com_Attack
         $arr = explode('_', $request->getControllerName(), 2);
 
         if ($request->isPost() and static::checkReferer() == false) {
-            throw new Sys_Exception(SYS_FORBIDDEN);
+            throw new Exception_Forbidden(SYS_ERR_FORBIDDEN);
         }
 
         switch ($arr[0]) {
             case "Aj":
                 if (static::checkReferer() == false) {
-                    throw new Sys_Exception(SYS_FORBIDDEN);
+                    throw new Exception_Forbidden(SYS_ERR_FORBIDDEN);
                 }
                 break;
             case "Api":

@@ -41,11 +41,7 @@ class Com_Context
     public static function get($key, $ifNotExist = null)
     {
         if (!isset(self::$contextData[$key])) {
-            if ($ifNotExist === null) {
-                throw new Exception_Program(CONTEXT_ERR_PARAMS, 'context has no "' . $key . '" in it');
-            } else {
-                return $ifNotExist;
-            }
+            return $ifNotExist;
         }
         return self::$contextData[$key];
     }
@@ -121,11 +117,21 @@ class Com_Context
         return $ifNotExist;
     }
 
+    public static function postParam($key, $ifNotExist = null)
+    {
+        $value = self::$request->getPost($key);
+        if (isset($value) AND $value !== '') {
+            return trim($value);
+        }
+
+        return $ifNotExist;
+    }
+
     /**
      * 获取全部参数
      * @return array
      */
-    public function getParams()
+    public static function getParams()
     {
         $params = self::$request->getParams() + self::$request->getQuery() + self::$request->getPost();
         ksort($params);
@@ -138,6 +144,21 @@ class Com_Context
         }
         return $params;
     }
+
+    public static function postParams()
+    {
+        $params = self::$request->getPost();
+        ksort($params);
+        foreach ($params as $k => $v) {
+            if ($v === '') {
+                unset($params[$k]);
+                continue;
+            }
+            $params[$k] = trim($v);
+        }
+        return $params;
+    }
+
 
 }
 

@@ -2,19 +2,21 @@
 
 class IndexTableModel extends Com_Abstract_Model
 {
-    protected $_db;
     protected $_table = 'index_table';
-    static protected $_instance;
 
-    public function __construct()
+    /**
+     * @param $ms
+     * @return Com_Model_Pool
+     */
+    protected function initDb($ms)
     {
-        $this->_db = CMysql::getInstance('db_1');
+        return Com_Model_Mysql::getInstance("example", $ms);
     }
 
-    public function getByStatus($status)
+    public function getExample($status)
     {
         $sql = "SELECT * FROM " . $this->reQuote($this->_table) . " WHERE status = :vStatus";
-        $stmt = $this->_db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':vStatus', $status);
         $stmt->execute();
         return $stmt->fetchAll();

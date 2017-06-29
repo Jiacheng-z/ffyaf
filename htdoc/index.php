@@ -5,21 +5,34 @@ define("BASE_PATH", dirname(__FILE__) . "/../");
 define("APPLICATION_PATH", BASE_PATH . "app/");
 define("CONFIG_PATH", BASE_PATH . "conf/");
 
-/* 检测是否是DEBUG模式 */
+define("DEBUG_LEVEL", E_ALL);
 define("DEBUG_GET_PW", "debug_code");
-if (file_exists(CONFIG_PATH . "debug")) {
+
+define("ERR_HANDLER_LEVEL_ONLINE", DEBUG_LEVEL & ~E_DEPRECATED);
+define("ERR_HANDLER_LEVEL_DEBUG", DEBUG_LEVEL);
+
+define("APP_TIME_LOG", true);
+
+$mainobj = new Yaf_Config_Simple(include(CONFIG_PATH . "main.php"));
+$mainArr = $mainobj->toArray();
+
+//DEBUG模式
+if (isset($mainArr['enableDebug']) && $mainArr['enableDebug'] == true) {
+
     define("YAF_DEBUG", true);
-    ini_set('display_errors', 1);
-    error_reporting(32767);
+    error_reporting(DEBUG_LEVEL);
+    ini_set('display_errors', 1);   //针对默认error处理的
+
 } else {
+
     define("YAF_DEBUG", false);
+
 }
 
 /* DEBUG模式将错误输出在前面 */
 if (YAF_DEBUG == true) {
     ob_start();
 }
-
 
 /* INI配置文件支持常量替换 */
 
@@ -31,32 +44,29 @@ $main = include(CONFIG_PATH . "main.php");
 $application = new Yaf_Application($main);
 
 /* 做简单的统计 */
-$benchmark = new Com_Benchmark();
+Com_Benchmark::start();
+
+/* 初始化全局errors */
+Com_Util::reset_global_errors();
+Com_Util::reset_global_header_errors();
 
 $response = $application
     ->bootstrap()/*bootstrap是可选的调用*/
     ->run();
 
-/* DEBUG输出 */
-$errors = Yaf_Registry::get('error');
-if (YAF_DEBUG == true) {
 
-    $content = ob_get_contents();
-    ob_end_clean();
-    if (isset($errors)) {
-        foreach ($errors as $e) {
-            echo $e;
-        }
-    }
+/* 优先输出错误 再输出正文内容 */
+if (Com_Util::isDebug()) {
+    $content = ob_get_clean();
+    Com_Util::print_global_errors();
+    Com_Util::reset_global_errors();
     echo $content;
+}
 
-} else {
-
-    if (isset($errors)) {
-        if (isset($_GET['debug']) and $_GET['debug'] == DEBUG_GET_PW) {
-            header('project-error:' . json_encode($errors));
-        }
-    }
+/* 头部输出debug信息 */
+if (Com_Util::isset_debug_code() and !empty(Com_Util::get_global_header_errors())) {
+    header('Project-Error-json:' . json_encode(Com_Util::get_global_header_errors()));
+    Com_Util::reset_global_header_errors();
 }
 
 

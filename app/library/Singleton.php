@@ -6,7 +6,6 @@
  */
 abstract class Singleton
 {
-
     private function __construct()
     {
     }

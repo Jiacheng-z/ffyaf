@@ -30,6 +30,12 @@ class Com_Log
     private $_filename;   //日志文件名
     private $_filehandle; //文件句柄
 
+
+    const ERROR_API = 'ERROR';      //API返回异常
+    const SYSERR = 'SYSERR';        //接口异常
+    const INFO = 'INFO';            //数据异常
+    const ERROR_CURL = 'CURLERR';   //CURL错误
+
     /**
      * Sys_Log constructor.
      * @param null $dir
@@ -71,27 +77,43 @@ class Com_Log
     }
 
     /**
-     *作用:写入记录
-     *输入:要写入的记录
-     *输出:无
+     * 作用:写入记录
+     * 输入:要写入的记录
+     * 输出:无
+     * @param string|array $log
      */
     public function setLog($log)
     {
         //传入的数组记录
         $str = date('Y-m-d H:i:s', time()) . "\t";
 
-        if (is_array($log)) {
-            foreach ($log as $k => $v) {
-                $str .= $k . " : " . $v . "\n";
-            }
-        } else {
-            $str .= $log . "\n";
-        }
+        $str .= $this->format_logs($log) . "\n";
 
         //写日志
         if (!fwrite($this->_filehandle, $str)) {//写日志失败
             die("写入日志失败");
         }
+    }
+
+    public function format_logs($log = [])
+    {
+        if (empty($log)) {
+            return "";
+        }
+
+        if (is_string($log)) {
+            return $log;
+        }
+
+        if (!is_array($log)) {
+            return $log;
+        }
+
+        $str = "";
+        if (is_array($log)) {
+            $str = json_encode($log, JSON_UNESCAPED_UNICODE);
+        }
+        return $str;
     }
 
     /**

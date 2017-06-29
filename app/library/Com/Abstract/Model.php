@@ -1,129 +1,118 @@
 <?php
 
-abstract class Com_Abstract_Model extends Singleton
+/**
+ * 业务数据库查询基类
+ * Class Com_Abstract_Model
+ */
+abstract class Com_Abstract_Model
 {
-    public static function reQuote($v)
+
+    /**
+     * 连接池对象
+     * @var Com_Model_Pool|PDO
+     */
+    protected $db = null;
+
+    /**
+     * @var string 表名
+     */
+    protected $table = null;
+
+    public function __construct($ms = Com_Model_Pool::MODEL_S)
+    {
+        $this->db = $this->initDb($ms);
+    }
+
+    abstract protected function initDb($ms);
+
+
+    /**
+     * 设置连接池
+     * @param Com_Model_Pool $obj
+     * @return $this
+     */
+    public function setPool(Com_Model_Pool $obj)
+    {
+        $this->db = $obj;
+        return $this;
+    }
+
+
+    protected function reQuote($v)
     {
         return '`' . $v . '`';
     }
 
-    public function add($arr)
+    /**
+     * @param array $arr
+     * @return bool|string
+     */
+    public function add(array $arr)
     {
-        if (!isset($arr['create_time'])) {
-            $arr['create_time'] = date('Y-m-d H:i:s', time());
-        }
-
-        $columns = [];
-        $values = [];
-        foreach ($arr as $k => $v) {
-            $columns[] = $this->reQuote($k);
-            $values[] = ':' . $k;
-        }
-        $columns_str = implode(',', $columns);
-        $values_str = implode(',', $values);
-        $stmt = $this->_db->prepare("insert into " . $this->reQuote($this->_table) . " (" . $columns_str . ") values(" . $values_str . ")");
-        foreach ($arr as $k => $v) {
-            $stmt->bindValue(':' . $k, $v);
-        }
-        $stmt->execute();
-
-        $id = $this->_db->lastInsertId();
-
-        if ($id === false) {
-            return false;
-        }
-
-        return $id;
+        return $this->db->add($this->table, $arr);
     }
 
-    public function update($id, $arr)
+    /**
+     * @param $id
+     * @param array $arr
+     * @return int
+     */
+    public function update($id, array $arr)
     {
-        foreach ($arr as $k => $v) {
-            $sets[] = $this->reQuote($k) . '=:' . $k;
-        }
-        $sets_str = implode(',', $sets);
-        $stmt = $this->_db->prepare("update " . $this->reQuote($this->_table) . " set " . $sets_str . " where id=:id");
-        foreach ($arr as $k => $v) {
-            $stmt->bindValue(':' . $k, $v);
-        }
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
-
-        return $stmt->rowCount();
+        return $this->db->update($this->table, $id, $arr);
     }
 
+    /**
+     * @param int $id
+     * @param bool $lock
+     * @return mixed
+     */
     public function getById($id, $lock = false)
     {
-        $sql = "select * from " . $this->reQuote($this->_table) . " where id = :id";
-        if ($lock) {
-            $sql .= " for update";
-        }
-        if ($lock) {
-            $stmt = $this->_db->prepare($sql, array(), 1);
-        } else {
-            $stmt = $this->_db->prepare($sql);
-        }
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
-        return $stmt->fetch();
+        return $this->db->getById($this->table, $id, $lock);
     }
 
-    public function getByIds($ids)
+    /**
+     * @param array $ids
+     * @return array
+     */
+    public function getByIds(array $ids)
     {
-        $ids_str = implode(',', $ids);
-        $stmt = $this->_db->prepare("select * from " . $this->reQuote($this->_table) . " where id in (" . $ids_str . ")");
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return $this->db->getByIds($this->table, $ids);
     }
 
-    public function delete($id, $hard = 0)
+    /**
+     * @param int $id
+     * @param bool $hard
+     * @return int
+     */
+    public function delete($id, $hard = false)
     {
-        if ($hard) {
-            $stmt = $this->_db->prepare("delete from " . $this->reQuote($this->_table) . " where id = :id");
-            $stmt->bindValue(':id', $id);
-            $stmt->execute();
-
-        } else {
-            return $this->update($id, array('status' => -1));
-        }
-        return $stmt->rowCount();
+        return $this->db->delete($this->table, $id, $hard);
     }
 
+    /**
+     * @return array
+     */
     public function getAll()
     {
-        $stmt = $this->_db->prepare("select * from " . $this->reQuote($this->_table));
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return $this->db->getAll($this->table);
     }
 
-    public function incr($id, $arr)
-    {
-        foreach ($arr as $k => $v) {
-            $sets[] = $this->reQuote($k) . '=' . $k . "+" . $v;
-        }
-        $sets_str = implode(',', $sets);
-        $stmt = $this->_db->prepare("update " . $this->reQuote($this->_table) . " set " . $sets_str . " where id=:id");
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
-        return $stmt->rowCount();
-    }
-
-
-    public function startBegin()
+    public function beginTransaction()
     {
         /* 开始事务 */
-        $this->_db->beginTransaction();
+        $this->db->beginTransaction();
     }
 
     public function rollBack()
     {
-        $this->_db->rollback();
+        $this->db->rollback();
     }
 
     public function commit()
     {
         /* 提交事务 */
-        $this->_db->commit();
+        $this->db->commit();
     }
-
 }

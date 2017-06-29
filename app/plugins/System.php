@@ -32,6 +32,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
                 Yaf_Registry::set("viewType", 'callback');
                 header('Content-type: text/html;charset=utf-8');
                 break;
+
             default:
                 $config = array(
                     "left_delimiter" => "{{",
@@ -66,7 +67,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
     public function dispatchLoopShutdown(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response)
     {
         // 结束xhprof
-        if (Com_Tool::isDebug() and Com_Config::get()->enableXhprof) {
+        if (Com_Util::isDebug() and Com_Config::get()->enableXhprof) {
             Ext_Xhprof::end();
         }
     }

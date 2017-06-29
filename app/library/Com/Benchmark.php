@@ -2,63 +2,100 @@
 
 class Com_Benchmark
 {
-    protected $_time = array();
+    static private $_time = [];
 
-    public function __construct()
+    /**
+     * 行原因
+     * @var string
+     */
+    static private $_reason = 'default';
+
+    /**
+     * 是否记录内存消耗
+     * @var bool
+     */
+    static private $_setmemory = true;
+
+    static public function reason($reason)
     {
-        $this->start();
+        self::$_reason = $reason;
     }
 
-    public function start($mark = 'start')
+    static public function start($mark = 'start')
     {
-        $this->_time = array();
-        return $this->mark($mark);
+        self::$_time = [];
+        return self::mark($mark);
     }
 
-    public function end($mark = 'end')
+    static public function end($mark = 'end')
     {
-        return $this->mark($mark);
+        $ret = self::mark($mark);
+        self::set_log();
+        return $ret;
     }
 
-    public function mark($name = null)
+    static public function mark($name = null)
     {
         if (is_null($name)) {
-            return $this->_time[] = microtime(true);
+            return self::$_time[] = microtime(true);
         } else {
-            return $this->_time[$name] = microtime(true);
+            return self::$_time[$name] = microtime(true);
         }
     }
 
-    public function cost($p1 = 'start', $p2 = 'end', $decimals = 4)
+    static private function cost($p1 = 'start', $p2 = 'end', $decimals = 4)
     {
-        $t1 = (empty($this->_time[$p1])) ? $this->mark($p1) : $this->_time[$p1];
-        $t2 = (empty($this->_time[$p2])) ? $this->mark($p2) : $this->_time[$p2];
+        $t1 = (empty(self::$_time[$p1])) ? self::mark($p1) : self::$_time[$p1];
+        $t2 = (empty(self::$_time[$p2])) ? self::mark($p2) : self::$_time[$p2];
         $t1 = $t1 * 1000;
         $t2 = $t2 * 1000;
 
         return abs(number_format($t2 - $t1, $decimals));
     }
 
-    public function step($decimals = 4)
+    static private function step($decimals = 4)
     {
-        $t1 = end($this->_time);
-        $t2 = $this->mark();
+        $t1 = end(self::$_time);
+        $t2 = self::mark();
         return number_format($t2 - $t1, $decimals);
     }
 
-    public function time()
+    static private function time()
     {
-        return $this->_time;
+        return self::$_time;
     }
 
-    public function memory($flag = false)
+    static private function memory($flag = false)
     {
         return memory_get_usage($flag);
     }
 
-    public function peak_memory($flag = false)
+    static private function peak_memory($flag = false)
     {
         return memory_get_peak_usage($flag);
+    }
+
+    static public function set_log()
+    {
+        if (!defined("APP_TIME_LOG") or APP_TIME_LOG !== true) {
+            return;
+        }
+
+        $url = $_SERVER['REQUEST_URI'];
+        $urlArr = explode('/', $url);
+        if (isset($urlArr[1]) and in_array($urlArr[1], ['css', 'iconfont', 'img', 'js'])) {
+            return;
+        }
+
+        $log = new Com_Log(LOG_RUNTIME_PATH, LOG_FILE_TIME);
+
+        $data = [self::$_reason, self::cost(), json_encode(self::time()), $_SERVER['REQUEST_URI']];
+        if (self::$_setmemory === true) {
+            $data[] = number_format(self::memory()) . 'byte';
+            $data[] = number_format(self::peak_memory()) . 'byte';
+        }
+
+        $log->setLog(implode(' ', $data));
     }
 
 }

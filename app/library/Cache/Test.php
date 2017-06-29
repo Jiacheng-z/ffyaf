@@ -9,20 +9,26 @@ class Cache_Test extends Com_Abstract_Cache
      * @var array
      */
     protected $configs = [
-        "t1" => ["%s_jc_%s", 61],
+        "ex1" => ["%s_ex1_%s", T_MIN],
+        "ex2" => ["%s_ex2_%s", T_HOUR],
+        "ex3" => ["%s_ex3_%s", T_DAY],
     ];
 
     /**
      * 定义key前缀
+     * cache_key_prefix中定义的
      */
-    protected $keyPrefix = 't1';
+    protected $keyPrefix = 'example';
 
-    public function test()
+
+    public function setExample($id, $value)
     {
-        $key = $this->key("t1", 123);
-//        $this->cacheObj()->setValue($key, "values");
-        $ret = $this->cacheObj()->getValue($key);
-        return $ret;
+        $this->setArray('ex1', $id, $value);
+    }
+
+    public function getExample($id)
+    {
+        return $this->getArray('ex1', $id);
     }
 
 }

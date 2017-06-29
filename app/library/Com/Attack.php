@@ -37,7 +37,7 @@ class Com_Attack
      * 检测referer是否合法
      * @return bool
      */
-    private static function checkReferer()
+    public static function checkReferer()
     {
         if (!isset($_SERVER['HTTP_REFERER']) or empty($_SERVER['HTTP_REFERER'])) {
             return false;

@@ -16,30 +16,26 @@ class Com_Cache_Pool
 
     public static function init()
     {
-        self::$configs = Com_Tool::getConfig("cache_pool");
+        self::$configs = Com_Config::get("cache_pool");
     }
 
     /**
-     * 根据名称建立缓存连接
+     * 根据名称获取缓存对象
      * @param $name
      * @return mixed
      * @throws Exception_Program
      */
-    public static function connect($name)
+    public static function initCacheObj($name)
     {
         if (isset(self::$pools[$name])) {
             return self::$pools[$name];
         }
 
         if (!isset(self::$configs[$name])) {
-            throw new Exception_Program(CACHE_ERR_CONFIG, "pool $name not defined");
+            throw new Exception_Program(CACHE_ERR_CONFIG, "pool " . $name . " not defined");
         }
 
         $backend = self::$configs[$name]['backend'];
-        $config = self::$configs[$name]["config"];
-        if (is_object($config)) {
-            $config = $config->toArray();
-        }
 
         $class = 'Com_Cache_' . $backend;
         if (!class_exists($class) || !in_array('Com_Cache_Interface', class_implements($class))) {
@@ -48,7 +44,7 @@ class Com_Cache_Pool
         }
 
         $cache = new $class;
-        $cache->configure($config);
+        $cache->setPoolName($name);
 
         self::bind($name, $cache);
 

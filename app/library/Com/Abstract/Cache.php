@@ -18,19 +18,22 @@ abstract class Com_Abstract_Cache
     protected $keyPrefix = '';
 
     /**
-     * 缓存池名称(配置)，必须指定 cache_pool.php key值
-     * @var string
-     */
-    protected $cachePoolName = '';
-
-    /**
      * @var Com_Cache_Interface
      */
     private $cacheObj = null;
 
+    /**
+     * 连接主库常量
+     */
+    const CACHE_M = 'master';
+
+    /**
+     * 连接从库常量
+     */
+    const CACHE_S = 'slave';
+
     public function __construct($pool = null)
     {
-        $pool = $pool ? $pool : $this->cachePoolName;
         if (empty($pool)) {
             throw new Exception_Cache(CACHE_ERR_CONFIG, get_class($this) . ' property cache_pool must be assigned');
         }
@@ -43,7 +46,7 @@ abstract class Com_Abstract_Cache
      */
     private function setPool($pool)
     {
-        $this->cacheObj = Com_Cache_Pool::connect($pool);
+        $this->cacheObj = Com_Cache_Pool::initCacheObj($pool);
     }
 
     /**
@@ -54,15 +57,25 @@ abstract class Com_Abstract_Cache
         return $this->cacheObj;
     }
 
-
     protected static $cache;
 
     protected function key($name)
     {
         $args = func_get_args();
+        return $this->keyName($name, $args);
+    }
+
+    private function keyArr($name, $arr)
+    {
+        $args = array_merge([$name], $arr);
+        return $this->keyName($name, $args);
+    }
+
+    private function keyName($name, $args)
+    {
         $id = join('_', $args);
-        if (isset(self::$cache['key'][$id])) {
-            return self::$cache['key'][$id];
+        if (isset(self::$cache['key'][$this->keyPrefix][$id])) {
+            return self::$cache['key'][$this->keyPrefix][$id];
         }
 
         if (empty($name)) {
@@ -72,15 +85,70 @@ abstract class Com_Abstract_Cache
             throw new Exception_Cache(CACHE_ERR_CONFIG, 'Key name ' . $name . ' illegal');
         }
 
-
+        $prefix = Com_Config::get()->cachePrefix . '_';
         if (isset(self::$cache['key_prefix'][$this->keyPrefix])) {
             $args[0] = self::$cache['key_prefix'][$this->keyPrefix];
         } else {//默认的cache前缀
-            $args[0] = Com_Tool::getConfig("cache_key_prefix")->{$this->keyPrefix};
+            $args[0] = $prefix . Com_Config::get("cache_key_prefix")->{$this->keyPrefix};
             self::$cache['key_prefix'][$this->keyPrefix] = $args[0];
         }
 
-        return self::$cache['key'][$id] = vsprintf($this->configs[$name][0], $args);
+        return self::$cache['key'][$this->keyPrefix][$id] = vsprintf($this->configs[$name][0], $args);
     }
 
+    /**
+     * 获取缓存单元缓存时间，未指定，默认缓存时间为60秒
+     *
+     * @param $name
+     * @return int
+     * @throws Exception_Cache
+     */
+    protected function livetime($name)
+    {
+        if (empty($name)) {
+            throw new Exception_Cache(CACHE_ERR_CONFIG, 'key name does not empty');
+        }
+        if (isset($this->configs[$name][1]) && !is_integer($this->configs[$name][1])) {
+            throw new Exception_Cache(CACHE_ERR_CONFIG, 'live time must be is valid integer');
+        }
+        return isset($this->configs[$name][1]) ? $this->configs[$name][1] : 60;
+    }
+
+    /**
+     * 通用设置缓存逻辑
+     * @param $keyName
+     */
+    protected function setArray($keyName)
+    {
+        $args = func_get_args();
+        $params = array_slice($args, 1, count($args) - 2);
+        $value = end($args);
+
+        $key = $this->keyArr($keyName, $params);
+        $live = $this->livetime($keyName);
+
+        if (!is_string($value)) {
+            $value = json_encode($value);
+        }
+        $this->cacheObj()->connection(self::CACHE_M)->setValue($key, $value, $live);
+    }
+
+    /**
+     * 通用获取缓存逻辑
+     * @param $keyName
+     * @return mixed
+     */
+    protected function getArray($keyName)
+    {
+        $args = func_get_args();
+        $params = array_slice($args, 1, count($args) - 1);
+
+        $key = $this->keyArr($keyName, $params);
+        $ret = $this->cacheObj()->connection(self::CACHE_S)->getValue($key);
+        if (!empty($ret)) {
+            $ret = json_decode($ret, true);
+        }
+
+        return $ret;
+    }
 }

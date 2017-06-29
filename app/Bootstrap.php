@@ -17,6 +17,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Controller.php"); /* 导入Controller基础类 */
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Action.php"); /* 导入Action基础类 */
         Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/View.php"); /* 导入View基础类 */
+        Yaf_Loader::import(APPLICATION_PATH . "library/Com/Abstract/Model.php"); /* 导入Model基础类 */
     }
 
     /**
@@ -42,13 +43,12 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
 
     public function _initLogger()
     {
-        if (Com_Tool::isDebug()) {
-
-            define("LOG_RUNTIME_PATH", Com_Config::get()->runtimePath);
-            define("LOG_FILE_APP", "application.log");
-            define("LOG_FILE_EXC", "exception.log");
-            define("LOG_FILE_ERR", "error.log");
-        }
+        $suffix = ".log_" . date("Ymd");
+        define("LOG_RUNTIME_PATH", Com_Config::get()->runtimePath);
+        define("LOG_FILE_APP", "application" . $suffix);
+        define("LOG_FILE_EXC", "exception" . $suffix);
+        define("LOG_FILE_ERR", "error" . $suffix);
+        define("LOG_FILE_TIME", "time" . $suffix);
     }
 
     /**
@@ -56,7 +56,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
      */
     public function _initXhprof()
     {
-        if (Com_Tool::isDebug() and Com_Config::get()->enableXhprof == true) {
+        if (Com_Util::isDebug() and Com_Config::get()->enableXhprof == true) {
             Ext_Xhprof::start();
         }
     }
@@ -64,6 +64,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
     public function _initSession()
     {
         $config = Com_Config::get();
+        Yaf_Session::getInstance()->start();
 
         ini_set("session.name", $config->session->name);
         ini_set("session.save_handler", $config->session->save_handler);

@@ -1,10 +1,15 @@
 <?php
 
 return [
-    "Test" => [
-        "backend" => "Memcached",
+    "example" => [
+        "backend" => "Redis",
         "config" => [
-            "127.0.0.1:11211",
+            'master' => [
+                "localhost:6379",
+            ],
+            'slave' => [
+                "localhost:6379",
+            ]
         ]
-    ]
+    ],
 ];

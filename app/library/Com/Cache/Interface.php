@@ -6,7 +6,15 @@
  */
 interface Com_Cache_Interface
 {
-    public function configure($config);
+    public function getPoolName();
+
+    public function setPoolName($name);
+
+    /**
+     * @param $source
+     * @return $this
+     */
+    public function connection($source);
 
     public function getValue($key);
 

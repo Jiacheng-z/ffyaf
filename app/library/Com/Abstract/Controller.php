@@ -31,7 +31,6 @@ abstract class Com_Abstract_Controller extends Yaf_Controller_Abstract
         $this->action = $request->getActionName();
         $this->method = $request->getMethod();
 
-
         /* 攻击检测 */
         Com_Attack::checkCSRF();
     }
@@ -43,5 +42,4 @@ abstract class Com_Abstract_Controller extends Yaf_Controller_Abstract
     public function getRequest()
     {
     }
-
 }

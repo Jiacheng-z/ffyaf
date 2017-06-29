@@ -151,4 +151,45 @@ abstract class Com_Abstract_Cache
 
         return $ret;
     }
+
+    /**
+     * cache的存储过程
+     * @param $contextKey
+     * @param callable $getCache
+     * @param callable $setCache
+     * @param callable $data
+     * @param array $default
+     * @return array
+     */
+    public static function cacheProcess(
+        $contextKey,
+        callable &$getCache,
+        callable &$setCache,
+        callable &$data,
+        $default = []
+    ) {
+        $ret = $default;
+        do {
+            $ret = Com_Context::get($contextKey);
+            if (!empty($ret)) {
+                break;
+            }
+
+            $ret = $getCache();
+            if (!empty($ret)) {
+                Com_Context::set($contextKey, $ret);
+                break;
+            }
+
+            $ret = $data();
+            if (empty($ret)) {
+                return $default;
+            }
+            $setCache($ret);
+            Com_Context::set($contextKey, $ret);
+
+        } while (false);
+
+        return $ret;
+    }
 }

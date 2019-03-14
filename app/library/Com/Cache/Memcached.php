@@ -70,11 +70,11 @@ class Com_Cache_Memcached extends Memcached implements Com_Cache_Interface
      * 获取连接池的配置信息
      * @param $source    master or slave
      * @return $this
-     * @throws Exception_Program
+     * @throws Exception_Cache
      */
     protected function getPoolConfig($source)
     {
-        $configs = Com_Config::get("cache_pool");
+        $configs = Com_Config::get("cache_pool_north");
 
         if (is_object($configs)) {
             $configs = $configs->toArray();
@@ -91,7 +91,7 @@ class Com_Cache_Memcached extends Memcached implements Com_Cache_Interface
             $config = explode(' ', $_SERVER[$config]);
         } elseif (is_array($config)) {//no need to do
         } else {
-            throw new Exception_Program(CACHE_ERR_CONFIG,
+            throw new Exception_Cache(CACHE_ERR_CONFIG,
                 'Config should be an array of "addr:port"s or a name of $_SERVER param');
         }
 

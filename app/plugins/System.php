@@ -6,7 +6,6 @@
  */
 class SystemPlugin extends Yaf_Plugin_Abstract
 {
-
     public function routerStartup(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response)
     {
     }
@@ -30,7 +29,8 @@ class SystemPlugin extends Yaf_Plugin_Abstract
                 Yaf_Dispatcher::getInstance()->setView($view);
                 Yaf_Registry::set("view", $view);
                 Yaf_Registry::set("viewType", 'callback');
-                header('Content-type: text/html;charset=utf-8');
+                header('Content-type: text/html; charset=utf-8');
+//                header('Content-type: application/json; charset=utf-8');
                 break;
 
             default:
@@ -38,7 +38,7 @@ class SystemPlugin extends Yaf_Plugin_Abstract
                     "left_delimiter" => "{{",
                     "right_delimiter" => "}}",
                     "template_dir" => APPLICATION_PATH . "views/",
-                    "compile_dir" => BASE_PATH . "/tmp/_templates_c/",
+                    "compile_dir" => BASE_PATH . "tmp/_templates_c/",
                     "caching" => false,
                     "error_reporting" => 32767,
                     "escape_html" => true,  //默认对所有变量{$variable|escape:"html"}，{$variable nofilter}可有选择的关闭
@@ -66,10 +66,10 @@ class SystemPlugin extends Yaf_Plugin_Abstract
 
     public function dispatchLoopShutdown(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response)
     {
-        // 结束xhprof
+        Com_Log::endAccess();
+
         if (Com_Util::isDebug() and Com_Config::get()->enableXhprof) {
             Ext_Xhprof::end();
         }
     }
-
 }

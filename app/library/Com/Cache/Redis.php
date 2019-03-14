@@ -1,16 +1,14 @@
 <?php
 
-/**
- * redis 基础类
- * @author jiaoyaun <jiaoyaun@staff.sina.com.cn>
- *
- */
 class Com_Cache_Redis extends Redis implements Com_Cache_Interface
 {
+
     /**
      * @var string  缓存池名称 cache_pool.php key值
      */
     protected $poolName = '';
+    protected $_addr = '';
+    protected $_port = '';
 
     /**
      * @var array 主从库连接标识
@@ -19,7 +17,7 @@ class Com_Cache_Redis extends Redis implements Com_Cache_Interface
      *
      * $connect_flag 最终格式为:
      * $connect_flag = [
-     *           '$poolName' =>['master' => false,'slave' => false],
+     *           '$poolName' =>['master' => false,'slave' => false, 'master_obj' => object, 'slave_obj' => object],
      *           '$poolName' =>['master' => false,'slave' => false],
      *            ......
      *             ];
@@ -48,40 +46,46 @@ class Com_Cache_Redis extends Redis implements Com_Cache_Interface
      * 连接redis
      * @param $source
      * @param bool $pconnect true 表示长连接 false 表示短连接
-     * @return $this
+     * @return Com_Cache_Interface
+     * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
     public function connection($source, $pconnect = false)
     {
         if (isset(self::$connect_flag[$this->getPoolName()][$source]) && self::$connect_flag[$this->getPoolName()][$source] == true) {
-            return $this;
+            return self::$connect_flag[$this->getPoolName()][$source . '_obj'];
         }
 
         $config = $this->getPoolConfig($source);
 
-        //var_dump($config);exit;
+        $redis = new self();
+        $redis->setPoolName($this->getPoolName());
+
         foreach ($config as $server) {
             list($addr, $port) = explode(':', $server, 2);
             $addr = isset($_SERVER[$addr]) ? $_SERVER[$addr] : $addr;
             $port = isset($_SERVER[$port]) ? $_SERVER[$port] : $port;
 
             if ($pconnect === true) {
-                $this->pconnect($addr, $port);   //连接不会主动关闭
+                $redis->pconnect($addr, $port);   //连接不会主动关闭
             } else {
-                $this->connect($addr, $port);
+                $redis->connect($addr, $port);
             }
         }
-        return $this;
+        self::$connect_flag[$this->getPoolName()][$source . '_obj'] = $redis;
+        return self::$connect_flag[$this->getPoolName()][$source . '_obj'];
     }
 
     /**
      * 获取连接池的配置信息
-     * @param $source    master or slave
-     * @return $this
-     * @throws Exception_Program
+     * @param $source
+     * @return array
+     * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
     protected function getPoolConfig($source)
     {
-        $configs = Com_Config::get("cache_pool");
+        $configs = Com_Config::get("cache_pool_" . Util_Tool::idc())->toArray();
 
         if (is_object($configs)) {
             $configs = $configs->toArray();
@@ -98,7 +102,7 @@ class Com_Cache_Redis extends Redis implements Com_Cache_Interface
             $config = explode(' ', $_SERVER[$config]);
         } elseif (is_array($config)) {//no need to do
         } else {
-            throw new Exception_Program(CACHE_ERR_CONFIG,
+            throw new Exception_Cache(CACHE_ERR_CONFIG,
                 'Config should be an array of "addr:port"s or a name of $_SERVER param');
         }
 
@@ -237,16 +241,17 @@ class Com_Cache_Redis extends Redis implements Com_Cache_Interface
     }
 
     /**
-     *
      * 批量插入数据 array('key'=>'value')
-     * @param array $values
-     * @param $expire  正对mset ,过期时间参数$expire无用
      *
      * $redis->mset(array('key0' => 'value0', 'key1' => 'value1'));
+     *
+     * @param array $values
+     * @param int $expire
+     * @return bool
      */
     public function mset(array $values, $expire = 60)
     {
-        if (empty($keys)) {
+        if (empty($values)) {
             return false;
         }
         return parent::mset($values);

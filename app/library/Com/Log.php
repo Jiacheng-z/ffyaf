@@ -56,7 +56,7 @@ class Com_Log
         //生成路径字串
         $path = $this->_createPath($this->_filepath, $this->_filename);
         //判断是否存在该文件
-        if (!$this->_isExist($path)) {//不存在
+        if (!file_exists($path)) {//不存在
             //没有路径的话，默认为当前目录
             if (!empty($this->_filepath)) {
                 //创建目录
@@ -95,6 +95,13 @@ class Com_Log
         }
     }
 
+    public function setLogRaw($log)
+    {
+        //传入的数组记录
+        $str = $this->format_logs($log) . "\n";
+        fwrite($this->_filehandle, $str);
+    }
+
     public function format_logs($log = [])
     {
         if (empty($log)) {
@@ -116,21 +123,65 @@ class Com_Log
         return $str;
     }
 
-    /**
-     *作用:判断文件是否存在
-     *输入:文件的路径,要写入的文件名
-     *输出:true | false
-     */
-    private function _isExist($path)
-    {
-        return file_exists($path);
-    }
 
     /**
-     *作用:创建目录(引用别人超强的代码-_-;;)
-     *输入:要创建的目录
-     *输出:true | false
+     * api异常日志写入
+     * @param Com_Http_Request $http_request
+     * @param $log_type
+     * @param $ext_info
      */
+    public function write_api_log(Com_Http_Request $http_request, $log_type, $ext_info = array())
+    {
+        $response_info = $http_request->get_response_info();
+        $url = $response_info['url'];
+        if (self::ERROR_CURL == $log_type) {
+            $http_code = $http_request->get_error_no();
+        } else {
+            $http_code = $response_info['http_code'];
+        }
+        $logs = array();
+        $logs['log_type'] = $log_type;
+        $logs['time'] = date('Y-m-d H:i:s');
+        $logs['http_code'] = '[' . $http_code . ']';
+        $logs['namelookup_time'] = sprintf("%.5f", $response_info['namelookup_time']);
+        $logs['connect_time'] = sprintf("%.5f", $response_info['connect_time']);
+        $logs['pretransfer_time'] = sprintf("%.5f", $response_info['pretransfer_time']);
+        $logs['starttransfer_time'] = sprintf("%.5f", $response_info['starttransfer_time']);
+        $logs['total_time'] = sprintf("%.5f", $response_info['total_time']);
+        $logs['request_method'] = $http_request->method;
+        $logs['request_url'] = $url;
+        if (strtolower($http_request->method) == 'get') {
+            $logs['request_fields'] = self::format_api_logs($http_request->query_fields);
+        } else {
+            $logs['request_fields'] = self::format_api_logs($http_request->post_fields);
+        }
+        $logs['ext'] = self::format_api_logs($ext_info);
+        self::setLog($logs);
+    }
+
+    public function format_api_logs($log = array())
+    {
+        if (empty($log)) {
+            return "";
+        }
+
+        if (is_string($log)) {
+            return $log;
+        }
+
+        if (!is_array($log)) {
+            return $log;
+        }
+
+        $str = "";
+        if (is_array($log)) {
+            foreach ($log as $k => $v) {
+                $str .= $k . ":" . $v . " ";
+            }
+        }
+        return $str;
+    }
+
     private function _createDir($dir)
     {
         return is_dir($dir) or ($this->_createDir(dirname($dir)) and mkdir($dir, 0777));
@@ -146,7 +197,7 @@ class Com_Log
         $fd = fopen($path, "w");
         fclose($fd);
         chmod($path, 0777);
-        return $this->_isExist($path);
+        return file_exists($path);
     }
 
     /**
@@ -172,6 +223,26 @@ class Com_Log
     {
         //关闭文件
         fclose($this->_filehandle);
+    }
+
+    public static function endAccess($extRet = [])
+    {
+        $request = Yaf_Dispatcher::getInstance()->getRequest();
+        $arr = explode('_', $request->getControllerName(), 2);
+        if (!in_array($arr[0], ['Api'])) {
+            return;
+        }
+
+        $view = Yaf_Registry::get('view');
+        if (Com_Util::isDebug()) {
+            $log = new Com_Log(LOG_RUNTIME_PATH, LOG_FILE_APP);
+            $log->setLog([
+                'uri' => $request->getRequestUri(),
+                'qid' => Com_Context::getParam('qid', 0),
+                'p' => Com_Context::getParams(),
+                'r' => array_merge($view->values, $extRet)
+            ]);
+        }
     }
 }
 

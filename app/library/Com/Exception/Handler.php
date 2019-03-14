@@ -127,6 +127,7 @@ class Com_Exception_Handler
                     "code" => $ex->getCode(),
                     "desc" => $ex->getMessage(),
                 ];
+                Com_Log::endAccess($arr);
                 self::_output($arr);//输出给对方
 
                 break;
@@ -135,9 +136,9 @@ class Com_Exception_Handler
 
                 self::displayException($ex);    //debug: smarty情况下打印异常|致命错误信息
                 if (is_a($ex, 'Yaf_Exception')) {
-                    self::_output(['code' => 404], true);
+                    self::_output(['code' => SYS_NOT_FOUND], true);
                 } else {
-                    self::_output(['code' => 503], true);
+                    self::_output(['code' => SYS_ERR_SERVER], true);
                 }
 
                 $errno = $ex->getCode();
@@ -329,12 +330,12 @@ class Com_Exception_Handler
                 $clog->setLog($log);
 
                 self::setErrorArr($errno, $errstr, $errfile, $errline);
-
             }
 
         } while (false);
 
         Com_Benchmark::end();
+        Com_Util::execute_clean_func();
 
         if (Com_Util::isset_debug_code() and !empty(Com_Util::get_global_header_errors())) {
             header('Project-Error-json:' . json_encode(Com_Util::get_global_header_errors())); //输出error
@@ -358,7 +359,7 @@ class Com_Exception_Handler
     private static function displayException($exception)
     {
         $viewType = Yaf_Registry::get("viewType");
-        if (Com_Util::isDebug() and $viewType == "smarty") {//TODO::不存在错误模板的情况下直接输出, 如果有模板, 走模板输出
+        if (Com_Util::isDebug() and $viewType == "smarty") {
             echo self::exceptionContent($exception);
         }
     }
@@ -438,6 +439,8 @@ class Com_Exception_Handler
                 $tpl = Com_Config::get()->exception_tpl->err_500;
                 if (isset($tpl) and file_exists($tpl)) {
                     $smarty = Yaf_Registry::get('view');
+                    $smarty->assign('service_unavailable', true);
+                    $smarty->assign('back_url', (Com_Attack::checkReferer()) ? $_SERVER['HTTP_REFERER'] : ''); //站内报错返回连接
                     $smarty->display($tpl);
                 }
                 break;
@@ -450,6 +453,8 @@ class Com_Exception_Handler
                 $tpl = Com_Config::get()->exception_tpl->err_404;
                 if (isset($tpl) and file_exists($tpl)) {
                     $smarty = Yaf_Registry::get('view');
+                    $smarty->assign('service_unavailable', false);
+                    $smarty->assign('back_url', (Com_Attack::checkReferer()) ? $_SERVER['HTTP_REFERER'] : '');
                     $smarty->display($tpl);
                 }
                 break;

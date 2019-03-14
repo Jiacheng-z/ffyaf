@@ -42,7 +42,9 @@ abstract class Com_Abstract_Cache
 
     /**
      * 动态设置缓存池
-     * @param string $pool
+     * @param $pool
+     * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
     private function setPool($pool)
     {
@@ -102,6 +104,7 @@ abstract class Com_Abstract_Cache
      * @param $name
      * @return int
      * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
     protected function livetime($name)
     {
@@ -117,6 +120,8 @@ abstract class Com_Abstract_Cache
     /**
      * 通用设置缓存逻辑
      * @param $keyName
+     * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
     protected function setArray($keyName)
     {
@@ -126,17 +131,13 @@ abstract class Com_Abstract_Cache
 
         $key = $this->keyArr($keyName, $params);
         $live = $this->livetime($keyName);
-
-        if (!is_string($value)) {
-            $value = json_encode($value);
-        }
-        $this->cacheObj()->connection(self::CACHE_M)->setValue($key, $value, $live);
+        $this->cacheObj()->connection(self::CACHE_M)->setValue($key, json_encode($value), $live);
     }
 
     /**
      * 通用获取缓存逻辑
      * @param $keyName
-     * @return mixed
+     * @return array|null
      */
     protected function getArray($keyName)
     {
@@ -145,51 +146,47 @@ abstract class Com_Abstract_Cache
 
         $key = $this->keyArr($keyName, $params);
         $ret = $this->cacheObj()->connection(self::CACHE_S)->getValue($key);
-        if (!empty($ret)) {
-            $ret = json_decode($ret, true);
-        }
+        return (empty($ret)) ? null : json_decode($ret, true);
+    }
 
-        return $ret;
+    protected function delCache($keyName)
+    {
+        $args = func_get_args();
+        $params = array_slice($args, 1, count($args) - 1);
+
+        $key = $this->keyArr($keyName, $params);
+        $this->cacheObj()->connection(self::CACHE_M)->del($key);
     }
 
     /**
-     * cache的存储过程
-     * @param $contextKey
-     * @param callable $getCache
-     * @param callable $setCache
-     * @param callable $data
-     * @param array $default
-     * @return array
+     * 通用设置缓存逻辑
+     * @param $keyName
+     * @throws Exception_Cache
+     * @throws Yaf_Exception
      */
-    public static function cacheProcess(
-        $contextKey,
-        callable &$getCache,
-        callable &$setCache,
-        callable &$data,
-        $default = []
-    ) {
-        $ret = $default;
-        do {
-            $ret = Com_Context::get($contextKey);
-            if (!empty($ret)) {
-                break;
-            }
+    protected function setNotArray($keyName)
+    {
+        $args = func_get_args();
+        $params = array_slice($args, 1, count($args) - 2);
+        $value = end($args);
 
-            $ret = $getCache();
-            if (!empty($ret)) {
-                Com_Context::set($contextKey, $ret);
-                break;
-            }
+        $key = $this->keyArr($keyName, $params);
+        $live = $this->livetime($keyName);
+        $this->cacheObj()->connection(self::CACHE_M)->setValue($key, $value, $live);
+    }
 
-            $ret = $data();
-            if (empty($ret)) {
-                return $default;
-            }
-            $setCache($ret);
-            Com_Context::set($contextKey, $ret);
+    /**
+     * 通用获取缓存逻辑
+     * @param $keyName
+     * @return null|string|integer
+     */
+    protected function getNotArray($keyName)
+    {
+        $args = func_get_args();
+        $params = array_slice($args, 1, count($args) - 1);
 
-        } while (false);
-
-        return $ret;
+        $key = $this->keyArr($keyName, $params);
+        $ret = $this->cacheObj()->connection(self::CACHE_S)->getValue($key);
+        return (empty($ret)) ? null : $ret;
     }
 }

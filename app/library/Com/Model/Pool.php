@@ -31,8 +31,9 @@ abstract Class Com_Model_Pool implements Com_Model_Interface
      * 根据db名字和主从初始化连接池并返回连接
      * @param $dbName
      * @param int $ms
-     * @return Com_Model_Pool
+     * @return mixed
      * @throws Exception_Program
+     * @throws Yaf_Exception
      */
     static public function getInstance($dbName, $ms = Com_Model_Pool::MODEL_M)
     {
@@ -42,11 +43,21 @@ abstract Class Com_Model_Pool implements Com_Model_Interface
             throw new Exception_Program(MODEL_ERR_PARAMS, "{$class}必须实现Com_Model_Interface");
         }
 
+        //不走连接池, 每次都创建新连接
+        if (defined("MYSQL_CONNECT_POOL") and MYSQL_CONNECT_POOL == false) {
+            return new $class($dbName, $ms);
+        }
+
         if (!isset(self::$pools[$class][$dbName][$ms])) {
             self::$pools[$class][$dbName][$ms] = new $class($dbName, $ms);
         }
 
         return self::$pools[$class][$dbName][$ms];
+    }
+
+    public static function unsetPool()
+    {
+        self::$pools = [];
     }
 
     /**
@@ -62,7 +73,6 @@ abstract Class Com_Model_Pool implements Com_Model_Interface
      * @return mixed
      */
     abstract protected function initConfig();
-
 
     public function __call($strMethod, $arrParam)
     {

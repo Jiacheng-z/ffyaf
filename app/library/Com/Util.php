@@ -57,6 +57,22 @@ class Com_Util
     }
 
     /**
+     * IP地址与地址段匹配
+     * @param $ip
+     * @param $range
+     * @return bool
+     */
+    public static function cidr_match($ip, $range)
+    {
+        list ($subnet, $bits) = explode('/', $range);
+        $ip = self::ip2long($ip);
+        $subnet = self::ip2long($subnet);
+        $mask = -1 << (32 - $bits);
+        $subnet &= $mask;
+        return ($ip & $mask) == $subnet;
+    }
+
+    /**
      * 使json_decode能处理32bit机器上溢出的数值类型
      *
      * @param $value
@@ -74,13 +90,36 @@ class Com_Util
         }
     }
 
+    public static function array_diff($aArray1, $aArray2)
+    {
+        $aReturn = array();
+
+        foreach ($aArray1 as $mKey => $mValue) {
+            if (array_key_exists($mKey, $aArray2)) {
+                if (is_array($mValue)) {
+                    $aRecursiveDiff = self::array_diff($mValue, $aArray2[$mKey]);
+                    if (count($aRecursiveDiff)) {
+                        $aReturn[$mKey] = $aRecursiveDiff;
+                    }
+                } else {
+                    if ($mValue != $aArray2[$mKey]) {
+                        $aReturn[$mKey] = $mValue;
+                    }
+                }
+            } else {
+                $aReturn[$mKey] = $mValue;
+            }
+        }
+        return $aReturn;
+    }
+
     /**
      * 数组内某个键值非空
      * @param array $arr
      * @param $key
      * @return bool
      */
-    public static function isset_key_nonempty(array &$arr, &$key)
+    public static function isset_key_nonempty(array $arr, $key)
     {
         return (!empty($arr) and isset($arr[$key]) and !empty($arr[$key]));
     }
@@ -125,7 +164,8 @@ class Com_Util
     /**
      * 输出全局错误
      */
-    public static function print_global_errors() {
+    public static function print_global_errors()
+    {
         $list = Yaf_Registry::get('show_errors');
         foreach ($list as $item) {
             echo $item;
@@ -160,5 +200,39 @@ class Com_Util
         return Yaf_Registry::get('header_errors');
     }
 
+
+    public static function add_clean_func(callable $func, array $param_arr = [])
+    {
+        $list = Yaf_Registry::get('yaf_business_clean_func');
+        if (empty($list)) {
+            $list = [];
+        }
+        $list[] = ['func' => $func, 'param' => $param_arr];
+        Yaf_Registry::set('yaf_business_clean_func', $list);
+    }
+
+    public static function execute_clean_func()
+    {
+        $list = Yaf_Registry::get('yaf_business_clean_func');
+        foreach ((array)$list as $funcArr) {
+            call_user_func_array($funcArr['func'], $funcArr['param']);
+        }
+    }
+
+    static public function sortByKey($sortArr, $key, $asc = 'asc')
+    {
+        usort($sortArr, function ($a, $b) use ($key, $asc) {
+            if ($a[$key] == $b[$key]) {
+                return 0;
+            }
+            if ($asc == 'asc') {
+                return ($a[$key] < $b[$key]) ? -1 : 1;
+            } else {
+                return ($a[$key] > $b[$key]) ? -1 : 1;
+            }
+        });
+
+        return $sortArr;
+    }
 
 }

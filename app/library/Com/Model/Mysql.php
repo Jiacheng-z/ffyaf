@@ -6,13 +6,13 @@ class Com_Model_Mysql extends Com_Model_Pool
     /**
      * 设置配置文件
      * @return mixed
-     * @throws Exception_Program
+     * @throws Exception_Mysql
      */
     protected function initConfig()
     {
         $configs = Com_Config::get("db");
         if (empty($configs)) {
-            throw new Exception_Program(MODEL_ERR_PARAMS, "没有找到数据库配置文件");
+            throw new Exception_Mysql(MODEL_ERR_PARAMS, "没有找到数据库配置文件");
         }
         return $configs;
     }
@@ -21,12 +21,12 @@ class Com_Model_Mysql extends Com_Model_Pool
      * @param $dbKey
      * @param int $ms
      * @return PDO
-     * @throws Exception_Program
+     * @throws Exception_Mysql
      */
     protected function initPDO($dbKey, $ms = Com_Model_Pool::MODEL_M)
     {
         if (empty($this->configs[$dbKey])) {
-            throw new Exception_Program(MODEL_ERR_PARAMS, "没有找到数据库配置项");
+            throw new Exception_Mysql(MODEL_ERR_PARAMS, "没有找到数据库配置项");
         }
 
         /**
@@ -59,6 +59,15 @@ class Com_Model_Mysql extends Com_Model_Pool
         $stmt = $pdo->query("show variables like '%sql_mode%'");
         $res = $stmt->fetch();
         $sql_mode = $res['Value'] . ",NO_UNSIGNED_SUBTRACTION";
+
+        /*去掉 ONLY_FULL_GROUP_BY */
+        if (substr($sql_mode, 0, strlen('ONLY_FULL_GROUP_BY,')) == 'ONLY_FULL_GROUP_BY,') {//在开头
+            $sql_mode = substr($sql_mode, strlen('ONLY_FULL_GROUP_BY,'));
+        } else {//在中间
+            $sql_mode = str_replace('ONLY_FULL_GROUP_BY', '', $sql_mode);
+            $sql_mode = str_replace(',,', ',', $sql_mode);
+        }
+
         $pdo->query("SET sql_mode='" . $sql_mode . "'");
         $pdo->query("SET NAMES utf8");
         return $pdo;
@@ -114,7 +123,7 @@ class Com_Model_Mysql extends Com_Model_Pool
      * @param array $arr
      * @return int
      */
-    public function update(&$table, $id, array $arr)
+    public function update($table, $id, array $arr)
     {
         $sets = [];
         foreach ($arr as $k => $v) {
@@ -138,7 +147,7 @@ class Com_Model_Mysql extends Com_Model_Pool
      * @param bool $lock
      * @return mixed
      */
-    public function getById(&$table, $id, $lock = false)
+    public function getById($table, $id, $lock = false)
     {
         $sql = "select * from " . self::reQuote($table) . " where id = :id";
         if ($lock) {
@@ -160,7 +169,7 @@ class Com_Model_Mysql extends Com_Model_Pool
      * @param array $ids
      * @return array
      */
-    public function getByIds(&$table, array $ids)
+    public function getByIds($table, array $ids)
     {
         $ids_str = implode(',', $ids);
         $stmt = $this->pdo->prepare("select * from " . self::reQuote($table) . " where id in (" . $ids_str . ")");
@@ -175,7 +184,7 @@ class Com_Model_Mysql extends Com_Model_Pool
      * @param bool $hard
      * @return int
      */
-    public function delete(&$table, $id, $hard = false)
+    public function delete($table, $id, $hard = false)
     {
         if ($hard) {
             $stmt = $this->pdo->prepare("delete from " . self::reQuote($table) . " where id = :id");
@@ -190,12 +199,17 @@ class Com_Model_Mysql extends Com_Model_Pool
 
     /**
      * 获取表中全部数据
-     * @param string $table
+     * @param $table
+     * @param bool $filter_status
      * @return array
      */
-    public function getAll(&$table)
+    public function getAll($table, $filter_status = false)
     {
-        $stmt = $this->pdo->prepare("select * from " . self::reQuote($table));
+        $sql = "select * from " . self::reQuote($table) . " where 1";
+        if ($filter_status == true) {
+            $sql .= " and status=1";
+        }
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
     }

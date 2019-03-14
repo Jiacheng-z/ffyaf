@@ -10,7 +10,6 @@ abstract class Com_Abstract_Exception extends Yaf_Exception
     public function __construct($code = 0, $message = "", Exception $previous = null)
     {
         if (empty($message)) {
-            $notEmpty = false;
 
             if (isset(Com_Exception_Descs::$errors[$code]) and !empty(Com_Exception_Descs::$errors[$code])) {
                 $message = Com_Exception_Descs::$errors[$code];

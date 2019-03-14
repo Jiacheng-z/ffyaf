@@ -92,11 +92,12 @@ abstract class Com_Abstract_Model
     }
 
     /**
+     * @param bool $filter_status
      * @return array
      */
-    public function getAll()
+    public function getAll($filter_status=false)
     {
-        return $this->db->getAll($this->table);
+        return $this->db->getAll($this->table,$filter_status);
     }
 
     public function beginTransaction()

@@ -13,6 +13,7 @@ define("SYS_ERR_FORBIDDEN", 2);  /* 无权限 */
 
 define("SYS_ERR_METHOD_INVALID", 3); /* 访问方法错误 */
 define("SYS_ERR_PARAMS_INVALID", 4); /* 访问参数错误 */
+define("SYS_ERR_REPEAT_REQUEST", 5); /* 重复请求 */
 
 define("SYS_REDIRECT_PERMANENTLY", 301); /* 永久重定向 */
 define("SYS_REDIRECT", 302); /* 临时重定向 */

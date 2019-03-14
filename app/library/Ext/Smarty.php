@@ -6,14 +6,9 @@
  * @date    2010-08-01 14:15
  * @version $Id$
  */
-
+ini_set("yaf.use_spl_autoload", "on");
 Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/Smarty.class.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_templatecompilerbase.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_templatelexer.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_templateparser.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_compilebase.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_internal_write_file.php");
-Yaf_Loader::import(APPLICATION_PATH . "/extensions/smarty/sysplugins/smarty_resource_custom.php");
+ini_set("yaf.use_spl_autoload", "off");
 
 class Ext_Smarty extends Com_Abstract_View
 {
@@ -24,14 +19,15 @@ class Ext_Smarty extends Com_Abstract_View
     public $_smarty;
 
     /**
-     * Constructor
-     *
-     * @param string $tmplPath
+     * Ext_Smarty constructor.
+     * @param null $tmplPath
      * @param array $extraParams
-     * @return void
+     * @throws Exception
      */
     public function __construct($tmplPath = null, $extraParams = array())
     {
+        ini_set("yaf.use_spl_autoload", "on");
+
         $this->_smarty = new Smarty;
         if (null !== $tmplPath) {
             $this->setScriptPath($tmplPath);
@@ -40,6 +36,8 @@ class Ext_Smarty extends Com_Abstract_View
         foreach ($extraParams as $key => $value) {
             $this->_smarty->$key = $value;
         }
+
+        ini_set("yaf.use_spl_autoload", "off");
     }
 
     /**
@@ -55,8 +53,8 @@ class Ext_Smarty extends Com_Abstract_View
     /**
      * Set the path to the templates
      *
-     * @param string $path The directory to set as the path.
-     * @return void
+     * @param $path
+     * @throws Exception
      */
     public function setScriptPath($path)
     {
@@ -71,7 +69,7 @@ class Ext_Smarty extends Com_Abstract_View
     /**
      * Retrieve the current template directory
      *
-     * @return string
+     * @return array|string
      */
     public function getScriptPath()
     {
@@ -80,10 +78,9 @@ class Ext_Smarty extends Com_Abstract_View
 
     /**
      * Alias for setScriptPath
-     *
-     * @param string $path
-     * @param string $prefix Unused
-     * @return void
+     * @param $path
+     * @param string $prefix
+     * @throws Exception
      */
     public function setBasePath($path, $prefix = 'Zend_View')
     {
@@ -93,9 +90,9 @@ class Ext_Smarty extends Com_Abstract_View
     /**
      * Alias for setScriptPath
      *
-     * @param string $path
-     * @param string $prefix Unused
-     * @return void
+     * @param $path
+     * @param string $prefix
+     * @throws Exception
      */
     public function addBasePath($path, $prefix = 'Zend_View')
     {
@@ -176,13 +173,18 @@ class Ext_Smarty extends Com_Abstract_View
     /**
      * Processes a template and returns the output.
      *
-     * @param string $name The template to process.
-     * @return string The output.
+     * @param $name
+     * @param null $value
+     * @return string|void
+     * @throws SmartyException
      */
     public function render($name, $value = null)
     {
+        ini_set("yaf.use_spl_autoload", "on");
         $name = str_replace('.phtml', '.tpl', $name);
-        return $this->_smarty->fetch($name);
+        $tpl = $this->_smarty->fetch($name);
+        ini_set("yaf.use_spl_autoload", "off");
+        return $tpl;
     }
 
     public function display($name, $value = null)

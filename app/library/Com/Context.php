@@ -36,7 +36,6 @@ class Com_Context
      * @param string|int|float $key 键名
      * @param null $ifNotExist
      * @return mixed|null
-     * @throws Exception_Program
      */
     public static function get($key, $ifNotExist = null)
     {
@@ -47,15 +46,15 @@ class Com_Context
     }
 
     /**
-     * 往一个指定的上下文键名中设置键值。如果该键值已经被设置，则会抛出异常。
+     * 往一个指定的上下文键名中设置键值。
      * @param string|int|float $key
      * @param $value
-     * @throws Exception_Program
+     * @param $rewrite bool
      */
-    public static function set($key, $value)
+    public static function set($key, $value, $rewrite = true)
     {
-        if (array_key_exists($key, self::$contextData)) {
-            throw new Exception_Program(CONTEXT_ERR_PARAMS, 'context has been already setted');
+        if (array_key_exists($key, self::$contextData) and $rewrite === false) {
+            return;
         }
 
         self::$contextData[$key] = $value;
@@ -68,6 +67,12 @@ class Com_Context
     public static function getContext()
     {
         return self::$contextData;
+    }
+
+    public static function unsetKey($key)
+    {
+        self::$contextData[$key] = null;
+        unset(self::$contextData[$key]);
     }
 
     /**
@@ -103,15 +108,24 @@ class Com_Context
     {
         $value = self::$request->getParam($key);
         if (isset($value) AND $value !== '') {
-            return trim($value);
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+            return $value;
         }
         $value = self::$request->getQuery($key);
         if (isset($value) AND $value !== '') {
-            return trim($value);
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+            return $value;
         }
         $value = self::$request->getPost($key);
         if (isset($value) AND $value !== '') {
-            return trim($value);
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+            return $value;
         }
 
         return $ifNotExist;
@@ -121,7 +135,10 @@ class Com_Context
     {
         $value = self::$request->getPost($key);
         if (isset($value) AND $value !== '') {
-            return trim($value);
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+            return $value;
         }
 
         return $ifNotExist;
@@ -140,7 +157,9 @@ class Com_Context
                 unset($params[$k]);
                 continue;
             }
-            $params[$k] = trim($v);
+            if (is_string($params[$k])) {
+                $params[$k] = trim($v);
+            }
         }
         return $params;
     }
@@ -154,7 +173,9 @@ class Com_Context
                 unset($params[$k]);
                 continue;
             }
-            $params[$k] = trim($v);
+            if (!is_array($v)) {
+                $params[$k] = trim($v);
+            }
         }
         return $params;
     }

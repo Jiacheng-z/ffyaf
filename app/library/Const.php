@@ -34,10 +34,13 @@ define("HTTP_ERR_SEND", 1303);
 
 /* ----- START 项目用变量 ----- */
 
+define("PROJECT_NAME", 'tpl');
+
 //时间相关
 define("T_SEC", 1);
 define("T_MIN", 60);
 define("T_HOUR", 3600);
 define("T_DAY", 86400);
+define("T_INFINITE", 0);
 
 /* ----- END   项目用变量 ----- */

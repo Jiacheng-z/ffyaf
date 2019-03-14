@@ -1,1 +1,1 @@
-<h1>{{$str}}</h1>
+Message: Contorllers/Index/Index

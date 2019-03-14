@@ -63,15 +63,13 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
 
     public function _initSession()
     {
-        $config = Com_Config::get();
-        Yaf_Session::getInstance()->start();
-
-        ini_set("session.name", $config->session->name);
-        ini_set("session.save_handler", $config->session->save_handler);
-        ini_set("session.save_path", $config->session->save_path);
-        ini_set("session.cookie_domain", $config->session->cookie_domain);
-        ini_set("session.gc_maxlifetime", $config->session->gc_maxlifetime);
-        ini_set("session.gc_probability", $config->session->gc_probability);
+//        $config = Com_Config::get();
+//        ini_set("session.name", $config->session->name);
+//        ini_set("session.save_handler", $config->session->save_handler);
+//        ini_set("session.save_path", $config->session->save_path);
+//        ini_set("session.cookie_domain", $config->session->cookie_domain);
+//        ini_set("session.gc_maxlifetime", $config->session->gc_maxlifetime);
+//        ini_set("session.gc_probability", $config->session->gc_probability);
     }
 
     public function _initRouter()
@@ -80,6 +78,11 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
             $router = Yaf_Dispatcher::getInstance()->getRouter();
             $config = new Yaf_Config_Simple(include(CONFIG_PATH . 'router.php'));
             $router->addConfig($config);
+
+//            //创建一个路由协议实例
+//            $route = new Yp_Route_Profession();
+//            //使用路由器装载路由协议
+//            $router->addRoute('profession', $route);
         }
     }
 
